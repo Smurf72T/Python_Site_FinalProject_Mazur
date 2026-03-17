@@ -25,4 +25,4 @@ def profile_edit(request):
             return redirect('ads:home')
     else:
         form = ProfileForm(instance=request.user.profile)
-    return render(request, 'users/profile_edit.html', {'form': form})
+    return render(request, 'registration/profile_edit.html', {'form': form})
