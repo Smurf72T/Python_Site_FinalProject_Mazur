@@ -7,7 +7,7 @@ from .forms import AdForm, ReviewForm
 from .services import get_filtered_ads, approve_ad_instance, reject_ad_instance
 
 def home(request):
-    ads = Ad.objects.filter(status='approved')
+    ads = Ad.objects.filter(status='approved').order_by('-created_at')
     search = request.GET.get('search')
     location = request.GET.get('location')
     min_price = request.GET.get('min_price')
