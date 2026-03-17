@@ -2,8 +2,10 @@
 {% block content %}
 <h1>Объявления</h1>
 <form method="get">
-    <input type="text" name="search" placeholder="Поиск">
-    <input type="text" name="location" placeholder="Город">
+    <input type="text" name="search" placeholder="Поиск" value="{{ request.GET.search }}">
+    <input type="text" name="location" placeholder="Город" value="{{ request.GET.location }}">
+    <input type="number" name="min_price" placeholder="Мин. цена" value="{{ request.GET.min_price }}">
+    <input type="number" name="max_price" placeholder="Макс. цена" value="{{ request.GET.max_price }}">
     <button type="submit">Найти</button>
 </form>
 <ul>
@@ -15,4 +17,18 @@
         <li>Объявлений нет</li>
     {% endfor %}
 </ul>
+
+{% if ads.has_other_pages %}
+<nav>
+    {% if ads.has_previous %}
+        <a href="?page={{ ads.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.location %}&location={{ request.GET.location }}{% endif %}{% if request.GET.min_price %}&min_price={{ request.GET.min_price }}{% endif %}{% if request.GET.max_price %}&max_price={{ request.GET.max_price }}{% endif %}">← Назад</a>
+    {% endif %}
+    
+    <span>Страница {{ ads.number }} из {{ ads.paginator.num_pages }}</span>
+    
+    {% if ads.has_next %}
+        <a href="?page={{ ads.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.location %}&location={{ request.GET.location }}{% endif %}{% if request.GET.min_price %}&min_price={{ request.GET.min_price }}{% endif %}{% if request.GET.max_price %}&max_price={{ request.GET.max_price }}{% endif %}">Вперед →</a>
+    {% endif %}
+</nav>
+{% endif %}
 {% endblock %}
