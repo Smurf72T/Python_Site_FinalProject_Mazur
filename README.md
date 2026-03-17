@@ -1,1 +1,4 @@
-# Python_Site_FinalProject_Mazur
+Дипломный проект: Веб-сайт для аренды одежды
+Имя Фамилия — Мазур Юрий
+логин на GitHub — Smurf72T
+e-mail — myskkk@yandex.ru
