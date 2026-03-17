@@ -1,8 +1,21 @@
+import logging
+import os
 from django.test import TestCase
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from decimal import Decimal
 from django.urls import reverse
+
+# Настройка логирования для тестов
+LOG_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'logs')
+os.makedirs(LOG_DIR, exist_ok=True)
+
+logging.basicConfig(
+    filename=os.path.join(LOG_DIR, 'ads_tests.log'),
+    level=logging.DEBUG,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 from .models import Category, Ad, Review
 from .forms import AdForm, ReviewForm
@@ -14,22 +27,31 @@ class CategoryModelTest(TestCase):
 
     def test_create_category(self):
         """Создание категории"""
+        logger.info("Начало теста: создание категории")
         category = Category.objects.create(
             name='Платья',
             description='Вечерние и коктейльные платья'
         )
+        logger.info(f"Создана категория: {category.name}")
         self.assertEqual(str(category), 'Платья')
         self.assertEqual(category.name, 'Платья')
 
     def test_category_unique_name(self):
         """Уникальность имени категории"""
+        logger.info("Начало теста: уникальность имени категории")
         Category.objects.create(name='Костюмы')
-        with self.assertRaises(Exception):
+        try:
             Category.objects.create(name='Костюмы')
+            logger.error("Тест не прошёл: дубликат категории создан")
+        except Exception as e:
+            logger.info(f"Тест прошёл: исключение при создании дубликата - {type(e).__name__}")
+            self.assertRaises(Exception)
 
     def test_category_empty_description(self):
         """Категория без описания"""
+        logger.info("Начало теста: категория без описания")
         category = Category.objects.create(name='Обувь')
+        logger.info(f"Создана категория без описания: {category.name}")
         self.assertEqual(category.description, '')
 
 
@@ -37,6 +59,7 @@ class AdModelTest(TestCase):
     """Тесты для модели Ad"""
 
     def setUp(self):
+        logger.debug("SetUp: создание пользователя и изображения")
         self.user = User.objects.create_user(
             username='testuser',
             password='testpass123'
@@ -47,9 +70,11 @@ class AdModelTest(TestCase):
             b"file_content",
             content_type="image/jpeg"
         )
+        logger.debug(f"SetUp завершён: пользователь {self.user.username}")
 
     def test_create_ad(self):
         """Создание объявления"""
+        logger.info("Начало теста: создание объявления")
         ad = Ad.objects.create(
             owner=self.user,
             title='Вечернее платье',
@@ -59,12 +84,14 @@ class AdModelTest(TestCase):
             image=self.image,
             category=self.category
         )
+        logger.info(f"Создано объявление: {ad.title}, статус: {ad.status}")
         self.assertEqual(str(ad), 'Вечернее платье')
         self.assertEqual(ad.status, 'pending')
         self.assertEqual(ad.owner, self.user)
 
     def test_ad_status_choices(self):
         """Статусы объявления"""
+        logger.info("Начало теста: статусы объявления")
         ad = Ad.objects.create(
             owner=self.user,
             title='Тестовое объявление',
@@ -75,10 +102,12 @@ class AdModelTest(TestCase):
             category=self.category,
             status='approved'
         )
+        logger.info(f"Объявление создано со статусом: {ad.status}")
         self.assertEqual(ad.status, 'approved')
 
     def test_ad_update_status(self):
         """Изменение статуса объявления"""
+        logger.info("Начало теста: изменение статуса объявления")
         ad = Ad.objects.create(
             owner=self.user,
             title='Тест',
@@ -87,8 +116,10 @@ class AdModelTest(TestCase):
             location='Москва',
             image=self.image
         )
+        logger.debug(f"Исходный статус: {ad.status}")
         ad.status = 'approved'
         ad.save()
+        logger.info(f"Статус изменён на: {Ad.objects.get(pk=ad.pk).status}")
         self.assertEqual(Ad.objects.get(pk=ad.pk).status, 'approved')
 
 
@@ -96,6 +127,7 @@ class ReviewModelTest(TestCase):
     """Тесты для модели Review"""
 
     def setUp(self):
+        logger.debug("SetUp: создание пользователей и объявления")
         self.user = User.objects.create_user(
             username='reviewer',
             password='testpass123'
@@ -117,20 +149,24 @@ class ReviewModelTest(TestCase):
             location='Москва',
             image=self.image
         )
+        logger.debug(f"SetUp завершён: объявление {self.ad.title}")
 
     def test_create_review(self):
         """Создание отзыва"""
+        logger.info("Начало теста: создание отзыва")
         review = Review.objects.create(
             ad=self.ad,
             author=self.user,
             rating=5,
             comment='Отличное объявление!'
         )
+        logger.info(f"Создан отзыв: {review}")
         self.assertEqual(str(review), f'Review by {self.user.username} on {self.ad.title}')
         self.assertEqual(review.rating, 5)
 
     def test_review_rating_range(self):
         """Проверка диапазона рейтинга"""
+        logger.info("Начало теста: диапазон рейтинга")
         for rating in range(1, 6):
             review = Review.objects.create(
                 ad=self.ad,
@@ -138,10 +174,13 @@ class ReviewModelTest(TestCase):
                 rating=rating,
                 comment=f'Рейтинг {rating}'
             )
+            logger.debug(f"Создан отзыв с рейтингом: {rating}")
             self.assertEqual(review.rating, rating)
+        logger.info("Тест диапазона рейтинга завершён")
 
     def test_review_cascade_delete(self):
         """Удаление отзыва при удалении объявления"""
+        logger.info("Начало теста: каскадное удаление отзыва")
         review = Review.objects.create(
             ad=self.ad,
             author=self.user,
@@ -149,9 +188,12 @@ class ReviewModelTest(TestCase):
             comment='Хорошо'
         )
         review_id = review.id
+        logger.debug(f"Создан отзыв id={review_id}, удаление объявления")
         self.ad.delete()
+        logger.info(f"Объявление удалено, проверка отзыва id={review_id}")
         with self.assertRaises(Review.DoesNotExist):
             Review.objects.get(id=review_id)
+        logger.info("Тест каскадного удаления пройден")
 
 
 class AdFormTest(TestCase):
@@ -253,12 +295,15 @@ class ServicesTest(TestCase):
     """Тесты для сервисных функций"""
 
     def setUp(self):
+        logger.debug("SetUp: создание пользователя и категории для сервисов")
         self.user = User.objects.create_user(username='testuser', password='pass')
         self.image = SimpleUploadedFile("test.jpg", b"content", content_type="image/jpeg")
         self.category = Category.objects.create(name='Платья')
+        logger.debug("SetUp завершён")
 
     def test_get_filtered_ads_search(self):
         """Фильтрация по поиску"""
+        logger.info("Начало теста: фильтрация по поиску")
         Ad.objects.create(
             owner=self.user,
             title='Вечернее платье',
@@ -279,11 +324,13 @@ class ServicesTest(TestCase):
         )
         ads = Ad.objects.filter(status='approved')
         filtered = get_filtered_ads(ads, search='платье')
+        logger.info(f"Найдено по поиску 'платье': {filtered.count()} объявлений")
         self.assertEqual(filtered.count(), 1)
         self.assertEqual(filtered.first().title, 'Вечернее платье')
 
     def test_get_filtered_ads_location(self):
         """Фильтрация по местоположению"""
+        logger.info("Начало теста: фильтрация по местоположению")
         Ad.objects.create(
             owner=self.user,
             title='Объявление 1',
@@ -304,10 +351,12 @@ class ServicesTest(TestCase):
         )
         ads = Ad.objects.filter(status='approved')
         filtered = get_filtered_ads(ads, location='москва')
+        logger.info(f"Найдено по локации 'москва': {filtered.count()} объявлений")
         self.assertEqual(filtered.count(), 1)
 
     def test_get_filtered_ads_price_range(self):
         """Фильтрация по цене"""
+        logger.info("Начало теста: фильтрация по цене")
         Ad.objects.create(
             owner=self.user,
             title='Дешевое',
@@ -328,11 +377,13 @@ class ServicesTest(TestCase):
         )
         ads = Ad.objects.filter(status='approved')
         filtered = get_filtered_ads(ads, min_price='5000', max_price='15000')
+        logger.info(f"Найдено по цене 5000-15000: {filtered.count()} объявлений")
         self.assertEqual(filtered.count(), 1)
         self.assertEqual(filtered.first().price, Decimal('10000.00'))
 
     def test_approve_ad_instance(self):
         """Одобрение объявления"""
+        logger.info("Начало теста: одобрение объявления")
         ad = Ad.objects.create(
             owner=self.user,
             title='Тест',
@@ -342,11 +393,14 @@ class ServicesTest(TestCase):
             image=self.image,
             status='pending'
         )
+        logger.debug(f"Исходный статус: {ad.status}")
         approved = approve_ad_instance(ad)
+        logger.info(f"Объявление одобрено, новый статус: {approved.status}")
         self.assertEqual(approved.status, 'approved')
 
     def test_reject_ad_instance(self):
         """Отклонение объявления"""
+        logger.info("Начало теста: отклонение объявления")
         ad = Ad.objects.create(
             owner=self.user,
             title='Тест',
@@ -356,7 +410,9 @@ class ServicesTest(TestCase):
             image=self.image,
             status='pending'
         )
+        logger.debug(f"Исходный статус: {ad.status}")
         rejected = reject_ad_instance(ad)
+        logger.info(f"Объявление отклонено, новый статус: {rejected.status}")
         self.assertEqual(rejected.status, 'rejected')
 
 
