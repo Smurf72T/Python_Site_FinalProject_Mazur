@@ -1,6 +1,41 @@
 {% extends 'base.html' %}
+{% block title %}Успешно!{% endblock %}
+
 {% block content %}
-<h1>Объявление успешно создано!</h1>
-<p>Ваше объявление отправлено на модерацию.</p>
-<a href="{% url 'ads:home' %}">Вернуться на главную</a>
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card border-success shadow-lg">
+            <div class="card-body text-center p-5">
+                <div class="mb-4">
+                    <i class="bi bi-check-circle-fill text-success" style="font-size: 6rem;"></i>
+                </div>
+                
+                <h2 class="fw-bold mb-3">Объявление успешно создано!</h2>
+                
+                <p class="lead text-muted mb-4">
+                    Ваше объявление отправлено на модерацию.
+                </p>
+                
+                <div class="alert alert-info text-start">
+                    <h6><i class="bi bi-info-circle"></i> Что дальше?</h6>
+                    <ol class="mb-0">
+                        <li>Наш модератор проверит объявление</li>
+                        <li>Обычно проверка занимает до 24 часов</li>
+                        <li>Вы получите уведомление о результате</li>
+                        <li>После одобрения объявление появится на сайте</li>
+                    </ol>
+                </div>
+                
+                <div class="d-grid gap-2 mt-4">
+                    <a href="{% url 'ads:home' %}" class="btn btn-primary btn-lg">
+                        <i class="bi bi-house"></i> Вернуться на главную
+                    </a>
+                    <a href="{% url 'ads:create' %}" class="btn btn-outline-primary">
+                        <i class="bi bi-plus-circle"></i> Создать ещё одно
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

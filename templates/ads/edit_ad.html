@@ -1,14 +1,14 @@
 {% extends 'base.html' %}
-{% block title %}Новое объявление - Аренда Одежды{% endblock %}
+{% block title %}Редактирование объявления{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-lg-8">
         <div class="text-center mb-4">
             <h1 class="display-6 fw-bold">
-                <i class="bi bi-plus-circle"></i> Новое объявление
+                <i class="bi bi-pencil"></i> Редактирование объявления
             </h1>
-            <p class="text-muted">Разместите объявление об аренде одежды</p>
+            <p class="text-muted">Внесите изменения в объявление</p>
         </div>
 
         <div class="card">
@@ -16,15 +16,12 @@
                 <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
                     
-                    <h5 class="mb-3"><i class="bi bi-file-text"></i> Основная информация</h5>
-                    
                     <div class="mb-3">
                         <label for="id_title" class="form-label">
                             <i class="bi bi-card-heading"></i> Заголовок *
                         </label>
                         <input type="text" name="title" class="form-control" id="id_title" 
-                               placeholder="Например: Вечернее платье Zara" required>
-                        <div class="form-text">Краткое и привлекательное название</div>
+                               value="{{ form.title.value }}" required>
                     </div>
 
                     <div class="mb-3">
@@ -32,8 +29,7 @@
                             <i class="bi bi-text-paragraph"></i> Описание *
                         </label>
                         <textarea name="description" class="form-control" id="id_description" 
-                                  rows="5" placeholder="Опишите товар подробно..." required></textarea>
-                        <div class="form-text">Укажите бренд, размер, состояние, особенности</div>
+                                  rows="5" required>{{ form.description.value }}</textarea>
                     </div>
 
                     <div class="row">
@@ -42,14 +38,14 @@
                                 <i class="bi bi-currency-dollar"></i> Цена за сутки (₽) *
                             </label>
                             <input type="number" name="price" class="form-control" id="id_price" 
-                                   placeholder="1000" required>
+                                   value="{{ form.price.value }}" required>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="id_deposit_amount" class="form-label">
                                 <i class="bi bi-shield-lock"></i> Залог (₽)
                             </label>
                             <input type="number" name="deposit_amount" class="form-control" 
-                                   id="id_deposit_amount" placeholder="5000" value="0">
+                                   id="id_deposit_amount" value="{{ form.deposit_amount.value|default:0 }}">
                         </div>
                     </div>
 
@@ -61,7 +57,10 @@
                             <select name="category" class="form-select" id="id_category">
                                 <option value="">Выберите категорию</option>
                                 {% for category in form.fields.category.queryset %}
-                                    <option value="{{ category.id }}">{{ category.name }}</option>
+                                    <option value="{{ category.id }}" 
+                                            {% if category.id == form.category.value %}selected{% endif %}>
+                                        {{ category.name }}
+                                    </option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -71,25 +70,23 @@
                             </label>
                             <select name="size" class="form-select" id="id_size">
                                 <option value="">Выберите размер</option>
-                                <option value="XS">XS (40-42)</option>
-                                <option value="S">S (42-44)</option>
-                                <option value="M">M (44-46)</option>
-                                <option value="L">L (46-48)</option>
-                                <option value="XL">XL (48-50)</option>
-                                <option value="XXL">XXL (50-52)</option>
-                                <option value="XXXL">XXXL (52+)</option>
+                                <option value="XS" {% if form.size.value == 'XS' %}selected{% endif %}>XS (40-42)</option>
+                                <option value="S" {% if form.size.value == 'S' %}selected{% endif %}>S (42-44)</option>
+                                <option value="M" {% if form.size.value == 'M' %}selected{% endif %}>M (44-46)</option>
+                                <option value="L" {% if form.size.value == 'L' %}selected{% endif %}>L (46-48)</option>
+                                <option value="XL" {% if form.size.value == 'XL' %}selected{% endif %}>XL (48-50)</option>
+                                <option value="XXL" {% if form.size.value == 'XXL' %}selected{% endif %}>XXL (50-52)</option>
+                                <option value="XXXL" {% if form.size.value == 'XXXL' %}selected{% endif %}>XXXL (52+)</option>
                             </select>
                         </div>
                     </div>
 
-                    <h5 class="mb-3 mt-4"><i class="bi bi-geo-alt"></i> Местоположение</h5>
-                    
                     <div class="mb-3">
                         <label for="id_location" class="form-label">
-                            <i class="bi bi-geo-alt"></i> Город/Район *
+                            <i class="bi bi-geo-alt"></i> Местоположение *
                         </label>
                         <input type="text" name="location" class="form-control" id="id_location" 
-                               placeholder="Москва, м. Тверская" required>
+                               value="{{ form.location.value }}" required>
                     </div>
 
                     <div class="mb-3">
@@ -97,31 +94,28 @@
                             <i class="bi bi-calendar-range"></i> Мин. срок аренды (дней)
                         </label>
                         <input type="number" name="min_rental_days" class="form-control" 
-                               id="id_min_rental_days" value="1" min="1">
+                               id="id_min_rental_days" value="{{ form.min_rental_days.value|default:1 }}" min="1">
                     </div>
 
-                    <h5 class="mb-3 mt-4"><i class="bi bi-images"></i> Фотографии</h5>
-                    
                     <div class="mb-3">
                         <label for="id_image" class="form-label">
-                            Основное фото *
+                            <i class="bi bi-images"></i> Фотография
                         </label>
-                        <input type="file" name="image" class="form-control" id="id_image" 
-                               accept="image/*" required>
-                        <div class="form-text">Загрузите качественное фото товара</div>
-                    </div>
-
-                    <div class="alert alert-info mt-4">
-                        <i class="bi bi-info-circle"></i> 
-                        <strong>Важно:</strong> После создания объявление будет отправлено на модерацию.
-                        Обычно проверка занимает не более 24 часов.
+                        {% if form.instance.image %}
+                            <div class="mb-2">
+                                <img src="{{ form.instance.image.url }}" alt="Текущее фото" 
+                                     class="img-thumbnail" style="max-height: 150px;">
+                            </div>
+                        {% endif %}
+                        <input type="file" name="image" class="form-control" id="id_image" accept="image/*">
+                        <div class="form-text">Оставьте пустым, чтобы не менять фото</div>
                     </div>
 
                     <div class="d-grid gap-2 mt-4">
                         <button type="submit" class="btn btn-primary btn-lg">
-                            <i class="bi bi-send"></i> Отправить на модерацию
+                            <i class="bi bi-check-circle"></i> Сохранить изменения
                         </button>
-                        <a href="{% url 'ads:home' %}" class="btn btn-outline-secondary">
+                        <a href="{% url 'ads:detail' form.instance.pk %}" class="btn btn-outline-secondary">
                             <i class="bi bi-arrow-left"></i> Отмена
                         </a>
                     </div>

@@ -1,17 +1,118 @@
 {% extends 'base.html' %}
+{% block title %}Модерация объявлений{% endblock %}
+
 {% block content %}
-<h1>Модерация</h1>
-{% for ad in ads %}
-    <div>
-        <p>{{ ad.title }} ({{ ad.owner.username }})</p>
-        <form method="post">
-            {% csrf_token %}
-            <input type="hidden" name="ad_id" value="{{ ad.id }}">
-            <button type="submit" name="action" value="approve">Одобрить</button>
-            <button type="submit" name="action" value="reject">Отклонить</button>
-        </form>
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="display-6 fw-bold">
+                    <i class="bi bi-shield-check"></i> Модерация объявлений
+                </h1>
+                <p class="text-muted">Проверьте новые объявления</p>
+            </div>
+            <span class="badge bg-warning fs-6">
+                {{ ads.count }} на проверке
+            </span>
+        </div>
     </div>
-{% empty %}
-    <p>Нет объявлений на модерации.</p>
-{% endfor %}
+</div>
+
+{% if ads %}
+    <div class="row row-cols-1 row-cols-md-2 g-4">
+        {% for ad in ads %}
+            <div class="col">
+                <div class="card h-100 border-warning">
+                    <div class="card-header bg-warning text-dark">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span><i class="bi bi-clock"></i> На модерации</span>
+                            <small>{{ ad.created_at|date:"d.m.Y H:i" }}</small>
+                        </div>
+                    </div>
+                    
+                    {% if ad.image %}
+                        <img src="{{ ad.image.url }}" class="card-img-top" alt="{{ ad.title }}" 
+                             style="height: 200px; object-fit: cover;">
+                    {% else %}
+                        <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" 
+                             style="height: 200px;">
+                            <i class="bi bi-image text-white" style="font-size: 3rem;"></i>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="card-body">
+                        <h5 class="card-title">{{ ad.title }}</h5>
+                        <p class="card-text text-muted">
+                            {{ ad.description|truncatewords:20 }}
+                        </p>
+                        
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <small class="text-muted">
+                                    <i class="bi bi-currency-dollar"></i> Цена:
+                                </small>
+                                <p class="mb-0 fw-bold">{{ ad.price }} ₽</p>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">
+                                    <i class="bi bi-person"></i> Владелец:
+                                </small>
+                                <p class="mb-0 fw-bold">{{ ad.owner.username }}</p>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">
+                                    <i class="bi bi-geo-alt"></i> Город:
+                                </small>
+                                <p class="mb-0 fw-bold">{{ ad.location }}</p>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">
+                                    <i class="bi bi-tags"></i> Категория:
+                                </small>
+                                <p class="mb-0 fw-bold">{{ ad.category|default:"—" }}</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Детали для модератора -->
+                        <div class="alert alert-info mb-0">
+                            <small>
+                                <i class="bi bi-info-circle"></i> 
+                                <strong>Залог:</strong> {{ ad.deposit_amount }} ₽ |
+                                <strong>Мин. срок:</strong> {{ ad.min_rental_days }} дн.
+                                {% if ad.size %} | <strong>Размер:</strong> {{ ad.get_size_display }}{% endif %}
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div class="card-footer bg-white">
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="ad_id" value="{{ ad.id }}">
+                            <div class="btn-group w-100" role="group">
+                                <button type="submit" name="action" value="reject" class="btn btn-outline-danger" 
+                                        onclick="return confirm('Отклонить это объявление?')">
+                                    <i class="bi bi-x-circle"></i> Отклонить
+                                </button>
+                                <button type="submit" name="action" value="approve" class="btn btn-success">
+                                    <i class="bi bi-check-circle"></i> Одобрить
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="text-center py-5">
+        <div class="mb-3">
+            <i class="bi bi-check-circle text-success" style="font-size: 5rem;"></i>
+        </div>
+        <h3 class="text-muted">Все объявления проверены</h3>
+        <p class="text-muted">Новых объявлений на модерации нет</p>
+        <a href="{% url 'ads:home' %}" class="btn btn-primary">
+            <i class="bi bi-house"></i> На главную
+        </a>
+    </div>
+{% endif %}
 {% endblock %}

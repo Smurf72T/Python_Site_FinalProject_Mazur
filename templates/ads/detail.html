@@ -1,18 +1,245 @@
 {% extends 'base.html' %}
+{% block title %}{{ ad.title }} - Аренда Одежды{% endblock %}
+
 {% block content %}
-<h1>{{ ad.title }}</h1>
-<p>{{ ad.description }}</p>
-<p>Цена: {{ ad.price }}</p>
-<p>Контакты: {{ ad.owner.email }}</p>
-<h3>Отзывы</h3>
-{% for review in ad.reviews.all %}
-    <p>{{ review.author }}: {{ review.rating }} - {{ review.comment }}</p>
-{% endfor %}
-{% if user.is_authenticated %}
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Оставить отзыв</button>
-    </form>
-{% endif %}
+<div class="row">
+    <!-- Изображение -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            {% if ad.image %}
+                <img src="{{ ad.image.url }}" class="card-img-top" alt="{{ ad.title }}" 
+                     style="max-height: 400px; object-fit: cover;">
+            {% else %}
+                <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" 
+                     style="height: 400px;">
+                    <i class="bi bi-image text-white" style="font-size: 5rem;"></i>
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Галерея дополнительных изображений -->
+        {% if ad.images.exists %}
+            <div class="row mt-3">
+                {% for image in ad.images.all|slice:":4" %}
+                    <div class="col-3">
+                        <img src="{{ image.image.url }}" class="img-fluid rounded" 
+                             alt="{{ image.caption }}" style="height: 80px; width: 100%; object-fit: cover;">
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Информация -->
+    <div class="col-md-6">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+                <h1 class="h2 fw-bold mb-1">{{ ad.title }}</h1>
+                {% if ad.category %}
+                    <span class="badge bg-primary">{{ ad.category.name }}</span>
+                {% endif %}
+                {% if ad.size %}
+                    <span class="badge bg-info">{{ ad.get_size_display }}</span>
+                {% endif %}
+                {% if ad.status == 'approved' %}
+                    <span class="badge bg-success">Доступно</span>
+                {% elif ad.status == 'rented' %}
+                    <span class="badge bg-secondary">Сдано</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="fs-3 fw-bold text-primary">{{ ad.price }} ₽</span>
+                    <small class="text-muted">/ сутки</small>
+                </div>
+                {% if ad.deposit_amount > 0 %}
+                    <p class="mb-0 text-muted">
+                        <i class="bi bi-shield-lock"></i> Залог: <strong>{{ ad.deposit_amount }} ₽</strong>
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-file-text"></i> Описание</h5>
+                <p class="card-text">{{ ad.description|linebreaks }}</p>
+            </div>
+        </div>
+
+        <div class="row g-2 mb-3">
+            <div class="col-6">
+                <div class="card">
+                    <div class="card-body py-2">
+                        <small class="text-muted"><i class="bi bi-geo-alt"></i> Местоположение</small>
+                        <p class="mb-0 fw-bold">{{ ad.location }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="card">
+                    <div class="card-body py-2">
+                        <small class="text-muted"><i class="bi bi-calendar"></i> Мин. срок</small>
+                        <p class="mb-0 fw-bold">{{ ad.min_rental_days }} дн.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Владелец -->
+        <div class="card mb-3">
+            <div class="card-body">
+                <h6 class="card-title"><i class="bi bi-person-circle"></i> Владелец</h6>
+                <p class="mb-1"><strong>{{ ad.owner.username }}</strong></p>
+                {% if ad.owner.profile.rating > 0 %}
+                    <p class="mb-0">
+                        <i class="bi bi-star-fill text-warning"></i> 
+                        <strong>{{ ad.owner.profile.rating }}</strong> 
+                        <small class="text-muted">({{ ad.owner.profile.reviews_count }} отзывов)</small>
+                    </p>
+                {% endif %}
+                {% if user.is_authenticated and user != ad.owner %}
+                    <a href="#" class="btn btn-outline-primary btn-sm mt-2">
+                        <i class="bi bi-chat"></i> Написать сообщение
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Действия -->
+        {% if user.is_authenticated %}
+            {% if user == ad.owner %}
+                <div class="btn-group w-100" role="group">
+                    <a href="{% url 'ads:edit' ad.pk %}" class="btn btn-warning">
+                        <i class="bi bi-pencil"></i> Редактировать
+                    </a>
+                    {% if ad.status != 'rented' %}
+                        <form action="{% url 'ads:rented' ad.pk %}" method="post" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-info">
+                                <i class="bi bi-check-circle"></i> Сдано
+                            </button>
+                        </form>
+                    {% endif %}
+                    <a href="{% url 'ads:delete' ad.pk %}" class="btn btn-danger" 
+                       onclick="return confirm('Удалить объявление?')">
+                        <i class="bi bi-trash"></i> Удалить
+                    </a>
+                </div>
+            {% else %}
+                <button class="btn btn-primary btn-lg w-100" data-bs-toggle="modal" data-bs-target="#rentalModal">
+                    <i class="bi bi-calendar-check"></i> Арендовать
+                </button>
+            {% endif %}
+        {% else %}
+            <a href="{% url 'users:login' %}" class="btn btn-primary btn-lg w-100">
+                <i class="bi bi-box-arrow-in-right"></i> Войдите для аренды
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Отзывы -->
+<div class="row mt-5">
+    <div class="col-12">
+        <h3 class="fw-bold mb-3">
+            <i class="bi bi-chat-square-text"></i> Отзывы 
+            <span class="badge bg-primary">{{ ad.reviews.count }}</span>
+        </h3>
+        
+        {% if ad.reviews.all %}
+            <div class="row">
+                {% for review in ad.reviews.all %}
+                    <div class="col-md-6 mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="mb-0">
+                                        <i class="bi bi-person-circle"></i> {{ review.author.username }}
+                                    </h6>
+                                    <div>
+                                        {% for i in "12345"|make_list %}
+                                            <i class="bi bi-star{% if forloop.counter <= review.rating %}-fill text-warning{% else %} text-muted{% endif %}"></i>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <p class="card-text mb-0">{{ review.comment }}</p>
+                                <small class="text-muted">{{ review.created_at|date:"d.m.Y" }}</small>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-muted">Отзывов пока нет. Будьте первым!</p>
+        {% endif %}
+
+        {% if user.is_authenticated and user != ad.owner %}
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-pencil"></i> Оставить отзыв</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label">Рейтинг</label>
+                            <select name="rating" class="form-select" required>
+                                <option value="5">⭐⭐⭐⭐⭐ - Отлично</option>
+                                <option value="4">⭐⭐⭐⭐ - Хорошо</option>
+                                <option value="3">⭐⭐⭐ - Нормально</option>
+                                <option value="2">⭐⭐ - Плохо</option>
+                                <option value="1">⭐ - Ужасно</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Комментарий</label>
+                            <textarea name="comment" class="form-control" rows="3" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-send"></i> Отправить отзыв
+                        </button>
+                    </form>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Модальное окно аренды -->
+<div class="modal fade" id="rentalModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-calendar-check"></i> Заявка на аренду</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>{{ ad.title }}</strong></p>
+                <p>Цена: <span class="text-primary fw-bold">{{ ad.price }} ₽</span>/сутки</p>
+                <form method="post" action="{% url 'ads:create_rental_request' ad.pk %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Дата начала</label>
+                        <input type="date" name="start_date" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Дата окончания</label>
+                        <input type="date" name="end_date" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Комментарий</label>
+                        <textarea name="comment" class="form-control" rows="2"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-send"></i> Отправить заявку
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

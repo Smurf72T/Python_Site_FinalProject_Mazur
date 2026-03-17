@@ -1,9 +1,197 @@
 {% extends 'base.html' %}
+{% block title %}Профиль - Аренда Одежды{% endblock %}
+
 {% block content %}
-<h1>Профиль</h1>
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Сохранить</button>
-</form>
+<div class="row">
+    <!-- Информация о пользователе -->
+    <div class="col-md-4 mb-4">
+        <div class="card text-center">
+            <div class="card-body">
+                {% if user.profile.avatar %}
+                    <img src="{{ user.profile.avatar.url }}" alt="Аватар" 
+                         class="rounded-circle mb-3" style="width: 120px; height: 120px; object-fit: cover;">
+                {% else %}
+                    <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                         style="width: 120px; height: 120px; font-size: 3rem;">
+                        {{ user.username|first|upper }}
+                    </div>
+                {% endif %}
+                
+                <h3 class="fw-bold mb-1">{{ user.username }}</h3>
+                <p class="text-muted mb-2">{{ user.email }}</p>
+                
+                {% if user.profile.is_verified %}
+                    <span class="badge bg-success">
+                        <i class="bi bi-patch-check"></i> Подтверждён
+                    </span>
+                {% endif %}
+                
+                {% if user.profile.is_moderator %}
+                    <span class="badge bg-primary mt-1">
+                        <i class="bi bi-shield-check"></i> Модератор
+                    </span>
+                {% endif %}
+                
+                <div class="mt-3">
+                    <div class="row">
+                        <div class="col-4">
+                            <h4 class="mb-0">{{ user.profile.ads_count }}</h4>
+                            <small class="text-muted">Объявлений</small>
+                        </div>
+                        <div class="col-4">
+                            <h4 class="mb-0">{{ user.profile.reviews_count }}</h4>
+                            <small class="text-muted">Отзывов</small>
+                        </div>
+                        <div class="col-4">
+                            <h4 class="mb-0">
+                                {% if user.profile.rating > 0 %}
+                                    {{ user.profile.rating }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </h4>
+                            <small class="text-muted">Рейтинг</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Дополнительная информация -->
+        <div class="card mt-3">
+            <div class="card-body">
+                <h6 class="card-title"><i class="bi bi-info-circle"></i> Информация</h6>
+                <ul class="list-unstyled mb-0">
+                    {% if user.profile.phone %}
+                        <li class="mb-2">
+                            <i class="bi bi-telephone"></i> {{ user.profile.phone }}
+                        </li>
+                    {% endif %}
+                    {% if user.profile.location %}
+                        <li class="mb-2">
+                            <i class="bi bi-geo-alt"></i> {{ user.profile.location }}
+                        </li>
+                    {% endif %}
+                    {% if user.profile.birth_date %}
+                        <li class="mb-2">
+                            <i class="bi bi-calendar"></i> 
+                            {% if user.profile.get_age %}
+                                {{ user.profile.get_age }} лет
+                            {% endif %}
+                        </li>
+                    {% endif %}
+                    {% if user.profile.member_since %}
+                        <li>
+                            <i class="bi bi-calendar-check"></i> 
+                            На сайте с {{ user.profile.member_since|date:"d.m.Y" }}
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Редактирование профиля -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-pencil"></i> Редактировать профиль</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <h6 class="mb-3">Контактная информация</h6>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="id_phone" class="form-label">
+                                <i class="bi bi-telephone"></i> Телефон
+                            </label>
+                            <input type="text" name="phone" class="form-control" id="id_phone" 
+                                   placeholder="+7 (999) 123-45-67" 
+                                   value="{{ user.profile.phone|default:'' }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="id_location" class="form-label">
+                                <i class="bi bi-geo-alt"></i> Город
+                            </label>
+                            <input type="text" name="location" class="form-control" id="id_location" 
+                                   placeholder="Москва" value="{{ user.profile.location|default:'' }}">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_bio" class="form-label">
+                            <i class="bi bi-person-lines-fill"></i> О себе
+                        </label>
+                        <textarea name="bio" class="form-control" id="id_bio" rows="3" 
+                                  placeholder="Расскажите немного о себе...">{{ user.profile.bio|default:'' }}</textarea>
+                        <div class="form-text">Максимум 500 символов</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_birth_date" class="form-label">
+                            <i class="bi bi-calendar"></i> Дата рождения
+                        </label>
+                        <input type="date" name="birth_date" class="form-control" id="id_birth_date" 
+                               value="{{ user.profile.birth_date|date:'Y-m-d'|default:'' }}">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_avatar" class="form-label">
+                            <i class="bi bi-image"></i> Аватар
+                        </label>
+                        <input type="file" name="avatar" class="form-control" id="id_avatar" 
+                               accept="image/*">
+                        {% if user.profile.avatar %}
+                            <div class="form-text">
+                                Текущий: <img src="{{ user.profile.avatar.url }}" alt="Аватар" 
+                                              style="width: 40px; height: 40px; object-fit: cover; border-radius: 50%;">
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Сохранить изменения
+                        </button>
+                        <a href="{% url 'ads:home' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> На главную
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Мои объявления -->
+        <div class="card mt-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-collection"></i> Мои объявления</h5>
+                <a href="{% url 'ads:create' %}" class="btn btn-primary btn-sm">
+                    <i class="bi bi-plus"></i> Добавить
+                </a>
+            </div>
+            <div class="card-body">
+                {% if user.ads.exists %}
+                    <div class="list-group">
+                        {% for ad in user.ads.all %}
+                            <a href="{% url 'ads:detail' ad.pk %}" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ ad.title }}</h6>
+                                    <span class="badge bg-{% if ad.status == 'approved' %}success{% elif ad.status == 'pending' %}warning{% else %}secondary{% endif %}">
+                                        {{ ad.get_status_display }}
+                                    </span>
+                                </div>
+                                <small class="text-muted">{{ ad.price }} ₽/сутки • {{ ad.location }}</small>
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted mb-0">У вас пока нет объявлений</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
