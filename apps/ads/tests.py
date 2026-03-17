@@ -5,6 +5,8 @@ from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from decimal import Decimal
 from django.urls import reverse
+from datetime import date, timedelta
+from django.utils import timezone
 
 # Настройка логирования для тестов
 LOG_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'logs')
@@ -17,7 +19,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-from .models import Category, Ad, Review
+from .models import Category, Ad, Review, RentalRequest, AdImage, Favorite, Message, Notification
 from .forms import AdForm, ReviewForm
 from .services import get_filtered_ads, approve_ad_instance, reject_ad_instance
 
@@ -566,3 +568,266 @@ class AdViewsTest(TestCase):
         })
         self.assertEqual(response.status_code, 302)
         self.assertFalse(Review.objects.filter(ad=self.ad, author=self.user).exists())
+
+
+# ============================================================
+# ТЕСТЫ ДЛЯ НОВЫХ МОДЕЛЕЙ
+# ============================================================
+
+class RentalRequestModelTest(TestCase):
+    """Тесты для модели RentalRequest (заявки на аренду)"""
+
+    def setUp(self):
+        logger.info("SetUp: создание пользователя и объявления для тестов заявок")
+        self.user = User.objects.create_user(username='owner', password='pass')
+        self.renter = User.objects.create_user(username='renter', password='pass')
+        self.image = SimpleUploadedFile("test.jpg", b"content", content_type="image/jpeg")
+        self.ad = Ad.objects.create(
+            owner=self.user,
+            title='Платье',
+            description='Описание',
+            price=Decimal('1000.00'),
+            location='Москва',
+            image=self.image
+        )
+        logger.debug(f"Создано объявление: {self.ad.title}")
+
+    def test_create_rental_request(self):
+        """Создание заявки на аренду"""
+        logger.info("Начало теста: создание заявки на аренду")
+        request = RentalRequest.objects.create(
+            ad=self.ad,
+            renter=self.renter,
+            start_date=date.today(),
+            end_date=date.today() + timedelta(days=3),
+            comment='Хочу арендовать'
+        )
+        logger.info(f"Создана заявка #{request.id}, статус: {request.status}")
+        self.assertEqual(request.status, 'pending')
+        self.assertIsNotNone(request.total_price)
+
+    def test_calculate_total_price(self):
+        """Расчёт стоимости аренды"""
+        logger.info("Начало теста: расчёт стоимости аренды")
+        request = RentalRequest(
+            ad=self.ad,
+            renter=self.renter,
+            start_date=date.today(),
+            end_date=date.today() + timedelta(days=5)
+        )
+        total = request.calculate_total_price()
+        expected = Decimal('1000.00') * 6  # 6 дней
+        logger.info(f"Расчёт стоимости: {total} (ожидалось {expected})")
+        self.assertEqual(total, expected)
+
+    def test_rental_request_status_change(self):
+        """Изменение статуса заявки"""
+        logger.info("Начало теста: изменение статуса заявки")
+        request = RentalRequest.objects.create(
+            ad=self.ad,
+            renter=self.renter,
+            start_date=date.today(),
+            end_date=date.today() + timedelta(days=2)
+        )
+        logger.debug(f"Исходный статус: {request.status}")
+        request.status = 'accepted'
+        request.save()
+        logger.info(f"Новый статус: {RentalRequest.objects.get(pk=request.pk).status}")
+        self.assertEqual(RentalRequest.objects.get(pk=request.pk).status, 'accepted')
+
+
+class AdImageModelTest(TestCase):
+    """Тесты для модели AdImage (галерея изображений)"""
+
+    def setUp(self):
+        logger.info("SetUp: создание объявления для тестов галереи")
+        self.user = User.objects.create_user(username='owner', password='pass')
+        self.image = SimpleUploadedFile("test.jpg", b"content", content_type="image/jpeg")
+        self.ad = Ad.objects.create(
+            owner=self.user,
+            title='Платье',
+            description='Описание',
+            price=Decimal('1000.00'),
+            location='Москва',
+            image=self.image
+        )
+
+    def test_create_ad_image(self):
+        """Создание изображения объявления"""
+        logger.info("Начало теста: создание изображения объявления")
+        gallery_image = SimpleUploadedFile("gallery.jpg", b"content", content_type="image/jpeg")
+        img = AdImage.objects.create(
+            ad=self.ad,
+            image=gallery_image,
+            caption='Дополнительное фото'
+        )
+        logger.info(f"Создано изображение для {self.ad.title}")
+        self.assertEqual(img.caption, 'Дополнительное фото')
+
+    def test_main_image_flag(self):
+        """Тест флага основного изображения"""
+        logger.info("Начало теста: флаг основного изображения")
+        img1 = SimpleUploadedFile("img1.jpg", b"content1", content_type="image/jpeg")
+        img2 = SimpleUploadedFile("img2.jpg", b"content2", content_type="image/jpeg")
+        image1 = AdImage.objects.create(ad=self.ad, image=img1, is_main=True)
+        logger.debug(f"Создано основное изображение: {image1.id}")
+        image2 = AdImage.objects.create(ad=self.ad, image=img2, is_main=True)
+        logger.info(f"Создано второе изображение с is_main=True: {image2.id}")
+        # Первое должно перестать быть основным
+        image1.refresh_from_db()
+        self.assertFalse(image1.is_main)
+        self.assertTrue(image2.is_main)
+
+
+class FavoriteModelTest(TestCase):
+    """Тесты для модели Favorite (избранное)"""
+
+    def setUp(self):
+        logger.info("SetUp: создание пользователей и объявления для тестов избранного")
+        self.user = User.objects.create_user(username='user1', password='pass')
+        self.image = SimpleUploadedFile("test.jpg", b"content", content_type="image/jpeg")
+        self.ad = Ad.objects.create(
+            owner=User.objects.create_user(username='owner', password='pass'),
+            title='Платье',
+            description='Описание',
+            price=Decimal('1000.00'),
+            location='Москва',
+            image=self.image
+        )
+
+    def test_add_to_favorites(self):
+        """Добавление в избранное"""
+        logger.info("Начало теста: добавление в избранное")
+        fav = Favorite.objects.create(user=self.user, ad=self.ad)
+        logger.info(f"Пользователь {self.user.username} добавил {self.ad.title} в избранное")
+        self.assertEqual(str(fav), 'user1 favorited Платье')
+
+    def test_unique_favorite(self):
+        """Нельзя добавить одно объявление дважды"""
+        logger.info("Начало теста: уникальность избранного")
+        Favorite.objects.create(user=self.user, ad=self.ad)
+        logger.debug("Первое добавление в избранное")
+        with self.assertRaises(Exception):
+            Favorite.objects.create(user=self.user, ad=self.ad)
+        logger.info("Попытка дублирования заблокирована unique_together")
+
+
+class MessageModelTest(TestCase):
+    """Тесты для модели Message (сообщения)"""
+
+    def setUp(self):
+        logger.info("SetUp: создание пользователей для тестов сообщений")
+        self.sender = User.objects.create_user(username='sender', password='pass')
+        self.recipient = User.objects.create_user(username='recipient', password='pass')
+
+    def test_send_message(self):
+        """Отправка сообщения"""
+        logger.info("Начало теста: отправка сообщения")
+        msg = Message.objects.create(
+            sender=self.sender,
+            recipient=self.recipient,
+            subject='Вопрос',
+            body='Здравствуйте, интересую аренда'
+        )
+        logger.info(f"Сообщение отправлено от {self.sender.username} к {self.recipient.username}")
+        self.assertFalse(msg.is_read)
+        self.assertEqual(msg.subject, 'Вопрос')
+
+    def test_mark_message_as_read(self):
+        """Отметка сообщения как прочитанного"""
+        logger.info("Начало теста: отметка сообщения как прочитанного")
+        msg = Message.objects.create(
+            sender=self.sender,
+            recipient=self.recipient,
+            body='Текст сообщения'
+        )
+        logger.debug(f"Исходное состояние is_read: {msg.is_read}")
+        msg.is_read = True
+        msg.save()
+        logger.info(f"Сообщение отмечено как прочитанное")
+        self.assertTrue(Message.objects.get(pk=msg.pk).is_read)
+
+
+class NotificationModelTest(TestCase):
+    """Тесты для модели Notification (уведомления)"""
+
+    def setUp(self):
+        logger.info("SetUp: создание пользователя для тестов уведомлений")
+        self.user = User.objects.create_user(username='user1', password='pass')
+
+    def test_create_notification(self):
+        """Создание уведомления"""
+        logger.info("Начало теста: создание уведомления")
+        notif = Notification.objects.create(
+            user=self.user,
+            title='Новое сообщение',
+            message='У вас новое сообщение',
+            notification_type='info'
+        )
+        logger.info(f"Создано уведомление: {notif.title}")
+        self.assertFalse(notif.is_read)
+
+    def test_mark_notification_as_read(self):
+        """Отметка уведомления как прочитанного"""
+        logger.info("Начало теста: отметка уведомления как прочитанного")
+        notif = Notification.objects.create(
+            user=self.user,
+            title='Тест',
+            message='Сообщение'
+        )
+        logger.debug(f"Исходное состояние is_read: {notif.is_read}")
+        notif.mark_as_read()
+        logger.info(f"Уведомление отмечено как прочитанное")
+        self.assertTrue(Notification.objects.get(pk=notif.pk).is_read)
+
+
+class AdModelExtendedTest(TestCase):
+    """Расширенные тесты для модели Ad"""
+
+    def setUp(self):
+        logger.info("SetUp: создание объявления для расширенных тестов")
+        self.user = User.objects.create_user(username='owner', password='pass')
+        self.image = SimpleUploadedFile("test.jpg", b"content", content_type="image/jpeg")
+        self.ad = Ad.objects.create(
+            owner=self.user,
+            title='Платье',
+            description='Описание',
+            price=Decimal('1000.00'),
+            location='Москва',
+            image=self.image,
+            size='M',
+            deposit_amount=Decimal('5000.00'),
+            min_rental_days=3
+        )
+
+    def test_ad_with_new_fields(self):
+        """Тест новых полей объявления"""
+        logger.info("Начало теста: новые поля объявления")
+        logger.debug(f"size: {self.ad.size}, deposit: {self.ad.deposit_amount}, min_days: {self.ad.min_rental_days}")
+        self.assertEqual(self.ad.size, 'M')
+        self.assertEqual(self.ad.deposit_amount, Decimal('5000.00'))
+        self.assertEqual(self.ad.min_rental_days, 3)
+
+    def test_increment_views(self):
+        """Увеличение счётчика просмотров"""
+        logger.info("Начало теста: увеличение счётчика просмотров")
+        initial_views = self.ad.views_count
+        logger.debug(f"Начальное количество просмотров: {initial_views}")
+        self.ad.increment_views()
+        logger.info(f"После increment_views: {self.ad.views_count}")
+        self.assertEqual(self.ad.views_count, initial_views + 1)
+
+    def test_is_available(self):
+        """Проверка доступности объявления"""
+        logger.info("Начало теста: проверка доступности объявления")
+        # Статус approved - доступно
+        self.ad.status = 'approved'
+        self.ad.save()
+        logger.debug(f"Статус approved, is_available: {self.ad.is_available()}")
+        self.assertTrue(self.ad.is_available())
+        
+        # Статус pending - недоступно
+        self.ad.status = 'pending'
+        self.ad.save()
+        logger.info(f"Статус pending, is_available: {self.ad.is_available()}")
+        self.assertFalse(self.ad.is_available())

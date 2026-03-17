@@ -3,6 +3,9 @@ import os
 from django.test import TestCase
 from django.contrib.auth.models import User
 from django.urls import reverse
+from datetime import date, timedelta
+from django.utils import timezone
+from decimal import Decimal
 from .models import Profile
 from .forms import RegistrationForm, ProfileForm
 
@@ -236,3 +239,88 @@ class UserAuthViewsTest(TestCase):
         self.user.profile.refresh_from_db()
         self.assertEqual(self.user.profile.phone, '+7 999 123-45-67')
         self.assertEqual(self.user.profile.location, 'Москва')
+
+
+# ============================================================
+# ТЕСТЫ ДЛЯ РАСШИРЕННОЙ МОДЕЛИ PROFILE
+# ============================================================
+
+class ProfileExtendedModelTest(TestCase):
+    """Расширенные тесты для модели Profile"""
+
+    def setUp(self):
+        logger.info("SetUp: создание пользователя для тестов профиля")
+        self.user = User.objects.create_user(
+            username='testuser',
+            password='pass123',
+            email='test@example.com'
+        )
+        self.profile = self.user.profile
+
+    def test_profile_new_fields(self):
+        """Тест новых полей профиля"""
+        logger.info("Начало теста: новые поля профиля")
+        self.profile.bio = 'Люблю моду'
+        self.profile.is_verified = True
+        self.profile.rating = Decimal('4.5')
+        self.profile.save()
+        logger.debug(f"bio: {self.profile.bio}, is_verified: {self.profile.is_verified}, rating: {self.profile.rating}")
+        self.assertEqual(self.profile.bio, 'Люблю моду')
+        self.assertTrue(self.profile.is_verified)
+        self.assertEqual(self.profile.rating, Decimal('4.5'))
+
+    def test_profile_get_age(self):
+        """Тест вычисления возраста"""
+        logger.info("Начало теста: вычисление возраста")
+        self.profile.birth_date = date(1990, 1, 1)
+        self.profile.save()
+        age = self.profile.get_age()
+        logger.info(f"Возраст пользователя: {age}")
+        self.assertIsNotNone(age)
+        self.assertGreater(age, 0)
+
+    def test_profile_get_age_no_birthdate(self):
+        """Тест возраста без даты рождения"""
+        logger.info("Начало теста: возраст без даты рождения")
+        self.profile.birth_date = None
+        self.profile.save()
+        age = self.profile.get_age()
+        logger.debug(f"Возраст при отсутствии даты рождения: {age}")
+        self.assertIsNone(age)
+
+    def test_profile_update_rating(self):
+        """Тест обновления рейтинга"""
+        logger.info("Начало теста: обновление рейтинга")
+        from apps.ads.models import Review, Ad
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from decimal import Decimal
+        
+        image = SimpleUploadedFile("test.jpg", b"content", content_type="image/jpeg")
+        # Создаём объявление от другого пользователя, чтобы отзывы были для self.user
+        other_user = User.objects.create_user(username='owner', password='pass')
+        ad = Ad.objects.create(
+            owner=other_user,
+            title='Тест',
+            description='Описание',
+            price=Decimal('1000.00'),
+            location='Москва',
+            image=image
+        )
+        # self.user оставляет отзывы на объявление - рейтинг должен обновиться у other_user.profile
+        Review.objects.create(ad=ad, author=self.user, rating=5, comment='Отлично')
+        Review.objects.create(ad=ad, author=self.user, rating=4, comment='Хорошо')
+        logger.debug("Создано 2 отзыва с рейтингами 5 и 4")
+        
+        # Обновляем рейтинг владельца объявления
+        other_user.profile.update_rating()
+        logger.info(f"Обновлённый рейтинг владельца: {other_user.profile.rating}")
+        self.assertEqual(other_user.profile.rating, Decimal('4.50'))
+        self.assertEqual(other_user.profile.reviews_count, 2)
+
+    def test_profile_statistics(self):
+        """Тест статистики профиля"""
+        logger.info("Начало теста: статистика профиля")
+        logger.debug(f"ads_count: {self.profile.ads_count}, reviews_count: {self.profile.reviews_count}")
+        self.assertEqual(self.profile.ads_count, 0)
+        self.assertEqual(self.profile.reviews_count, 0)
+        self.assertIsNotNone(self.profile.member_since)
