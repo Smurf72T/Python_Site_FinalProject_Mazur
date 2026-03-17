@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Аренда Одежды</title>
+</head>
+<body>
+    <nav>
+        <a href="{% url 'ads:home' %}">Главная</a>
+        {% if user.is_authenticated %}
+            <a href="{% url 'ads:create' %}">Разместить</a>
+            <a href="{% url 'users:profile' %}">Профиль</a>
+            {% if user.profile.is_moderator %}
+                <a href="{% url 'ads:moderate' %}">Модерация</a>
+            {% endif %}
+            <form action="{% url 'users:logout' %}" method="post" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit">Выйти</button>
+            </form>
+        {% else %}
+            <a href="{% url 'users:login' %}">Вход</a>
+            <a href="{% url 'users:register' %}">Регистрация</a>
+        {% endif %}
+    </nav>
+    <hr>
+    {% if messages %}
+        {% for message in messages %}
+            <p>{{ message }}</p>
+        {% endfor %}
+    {% endif %}
+    {% block content %}{% endblock %}
+</body>
+</html>

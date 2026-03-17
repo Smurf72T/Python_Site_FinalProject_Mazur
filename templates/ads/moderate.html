@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Модерация</h1>
+{% for ad in ads %}
+    <div>
+        <p>{{ ad.title }} ({{ ad.owner.username }})</p>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="ad_id" value="{{ ad.id }}">
+            <button type="submit" name="action" value="approve">Одобрить</button>
+            <button type="submit" name="action" value="reject">Отклонить</button>
+        </form>
+    </div>
+{% empty %}
+    <p>Нет объявлений на модерации.</p>
+{% endfor %}
+{% endblock %}

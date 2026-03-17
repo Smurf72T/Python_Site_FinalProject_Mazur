@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>{{ ad.title }}</h1>
+<p>{{ ad.description }}</p>
+<p>Цена: {{ ad.price }}</p>
+<p>Контакты: {{ ad.owner.email }}</p>
+<h3>Отзывы</h3>
+{% for review in ad.reviews.all %}
+    <p>{{ review.author }}: {{ review.rating }} - {{ review.comment }}</p>
+{% endfor %}
+{% if user.is_authenticated %}
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Оставить отзыв</button>
+    </form>
+{% endif %}
+{% endblock %}

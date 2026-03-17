@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Объявления</h1>
+<form method="get">
+    <input type="text" name="search" placeholder="Поиск">
+    <input type="text" name="location" placeholder="Город">
+    <button type="submit">Найти</button>
+</form>
+<ul>
+    {% for ad in ads %}
+        <li>
+            <a href="{% url 'ads:detail' ad.pk %}">{{ ad.title }}</a> - {{ ad.price }} руб.
+        </li>
+    {% empty %}
+        <li>Объявлений нет</li>
+    {% endfor %}
+</ul>
+{% endblock %}
