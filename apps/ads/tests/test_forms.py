@@ -2,13 +2,24 @@
 Тесты для форм приложения ads.
 """
 from decimal import Decimal
+from io import BytesIO
 
 from django.test import TestCase
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
+from PIL import Image
 
 from apps.ads.forms import AdForm, ReviewForm
 from apps.ads.models import Category, Ad
+
+
+def create_test_image():
+    """Создать тестовое изображение в формате JPEG."""
+    img = Image.new('RGB', (100, 100), color='red')
+    buffer = BytesIO()
+    img.save(buffer, format='JPEG')
+    buffer.seek(0)
+    return buffer
 
 
 class AdFormTest(TestCase):
@@ -18,7 +29,7 @@ class AdFormTest(TestCase):
         self.category = Category.objects.create(name='Платья')
         self.image = SimpleUploadedFile(
             "test_image.jpg",
-            b"file_content",
+            create_test_image().read(),
             content_type="image/jpeg"
         )
 
@@ -32,6 +43,8 @@ class AdFormTest(TestCase):
             'category': self.category.id
         }
         form = AdForm(data=form_data, files={'image': self.image})
+        if not form.is_valid():
+            print(f"Ошибки формы: {form.errors}")
         self.assertTrue(form.is_valid())
 
     def test_ad_form_missing_title(self):
@@ -71,23 +84,24 @@ class AdFormTest(TestCase):
 class ReviewFormTest(TestCase):
     """Тесты для формы ReviewForm."""
 
-    def setUp(self):
-        self.user = User.objects.create_user(
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user(
             username='testuser',
             password='pass'
         )
-        self.image = SimpleUploadedFile(
+        cls.image = SimpleUploadedFile(
             "test.jpg",
-            b"content",
+            create_test_image().read(),
             content_type="image/jpeg"
         )
-        self.ad = Ad.objects.create(
-            owner=self.user,
+        cls.ad = Ad.objects.create(
+            owner=cls.user,
             title='Тест',
             description='Описание',
             price=Decimal('1000.00'),
             location='Москва',
-            image=self.image
+            image=cls.image
         )
 
     def test_review_form_valid(self):
