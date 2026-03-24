@@ -98,6 +98,17 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
+# Настройки для работы в Docker
+CSRF_COOKIE_SECURE = False  # В development можно False
+CSRF_COOKIE_SAMESITE = "Lax"
+SESSION_COOKIE_SECURE = False  # В development можно False
+SESSION_COOKIE_SAMESITE = "Lax"
+SESSION_COOKIE_HTTPONLY = True
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:8000",
+    "http://localhost:8001",
+]
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGIN_REDIRECT_URL = "ads:home"
 LOGOUT_REDIRECT_URL = "ads:home"
