@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import Paginator
-from .models import Ad, Review, RentalRequest
+from .models import Ad, Review, RentalRequest, Notification
 from .forms import AdForm, ReviewForm
 from .services import get_filtered_ads, approve_ad_instance, reject_ad_instance
 
@@ -128,9 +128,146 @@ def create_rental_request(request, pk):
                     comment=comment
                 )
                 rental_request.save()
+                
+                # Создаём уведомление для владельца
+                Notification.objects.create(
+                    user=ad.owner,
+                    title='Новая заявка на аренду',
+                    message=f'Пользователь {request.user.username} хочет арендовать ваше объявление "{ad.title}". '
+                            f'Период: {start_date} - {end_date}.',
+                    notification_type='info',
+                    link=f'/ads/requests/{rental_request.id}/'
+                )
+                
                 messages.success(request, 'Заявка на аренду создана.')
                 return redirect('ads:detail', pk=pk)
         else:
             messages.error(request, 'Укажите даты аренды.')
     
     return redirect('ads:detail', pk=pk)
+
+
+@login_required
+def my_requests(request):
+    """
+    Страница моих заявок на аренду.
+    """
+    # Заявки, где пользователь - арендатор
+    renter_requests = RentalRequest.objects.filter(renter=request.user).order_by('-created_at')
+    
+    # Заявки на объявления пользователя (где он владелец)
+    owner_requests = RentalRequest.objects.filter(ad__owner=request.user).order_by('-created_at')
+    
+    return render(request, 'ads/my_requests.html', {
+        'renter_requests': renter_requests,
+        'owner_requests': owner_requests
+    })
+
+
+@login_required
+def request_detail(request, pk):
+    """
+    Страница детали заявки на аренду.
+    """
+    rental_request = get_object_or_404(RentalRequest, pk=pk)
+    
+    # Доступ только для владельца объявления или арендатора
+    if rental_request.ad.owner != request.user and rental_request.renter != request.user:
+        messages.error(request, 'Доступ запрещён.')
+        return redirect('ads:home')
+    
+    return render(request, 'ads/request_detail.html', {'rental_request': rental_request})
+
+
+@login_required
+def respond_to_request(request, pk):
+    """
+    Ответ на заявку на аренду (подтвердить/отклонить).
+    """
+    rental_request = get_object_or_404(RentalRequest, pk=pk)
+    
+    # Доступ только для владельца объявления
+    if rental_request.ad.owner != request.user:
+        messages.error(request, 'Доступ запрещён.')
+        return redirect('ads:home')
+    
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'accept':
+            rental_request.status = 'accepted'
+            rental_request.save()
+            
+            # Меняем статус объявления на 'rented'
+            rental_request.ad.status = 'rented'
+            rental_request.ad.save()
+            
+            # Уведомление арендатору
+            Notification.objects.create(
+                user=rental_request.renter,
+                title='Заявка подтверждена',
+                message=f'Ваша заявка на аренду "{rental_request.ad.title}" подтверждена! '
+                        f'Период: {rental_request.start_date} - {rental_request.end_date}.',
+                notification_type='success',
+                link=f'/ad/{rental_request.ad.pk}/'
+            )
+            
+            messages.success(request, 'Заявка подтверждена. Объявление отмечено как сданное.')
+            
+        elif action == 'reject':
+            rental_request.status = 'rejected'
+            rental_request.save()
+            
+            # Уведомление арендатору
+            Notification.objects.create(
+                user=rental_request.renter,
+                title='Заявка отклонена',
+                message=f'Ваша заявка на аренду "{rental_request.ad.title}" отклонена.',
+                notification_type='error',
+                link=f'/ad/{rental_request.ad.pk}/'
+            )
+            
+            messages.success(request, 'Заявка отклонена.')
+    
+    return redirect('ads:my_requests')
+
+
+@login_required
+def send_message(request, recipient_id):
+    """
+    Отправить сообщение пользователю.
+    """
+    from django.contrib.auth.models import User
+    from .models import Message
+    
+    recipient = get_object_or_404(User, pk=recipient_id)
+    
+    if request.method == 'POST':
+        body = request.POST.get('body')
+        subject = request.POST.get('subject', '')
+        ad_id = request.POST.get('ad_id')
+        
+        if body:
+            ad = get_object_or_404(Ad, pk=ad_id) if ad_id else None
+            
+            Message.objects.create(
+                sender=request.user,
+                recipient=recipient,
+                subject=subject,
+                body=body,
+                ad=ad
+            )
+            
+            # Уведомление о новом сообщении
+            Notification.objects.create(
+                user=recipient,
+                title='Новое сообщение',
+                message=f'Вам отправили сообщение от {request.user.username}',
+                notification_type='info',
+                link='/users/messages/'
+            )
+            
+            messages.success(request, 'Сообщение отправлено.')
+            return redirect('ads:my_requests')
+    
+    return redirect('ads:my_requests')

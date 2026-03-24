@@ -182,4 +182,7 @@ media/
 # Static files
 staticfiles/
 
-logs/  
+logs/
+
+# Qwen Code settings
+.qwen/  

@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+{% block title %}Заявка №{{ rental_request.id }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-file-text"></i> Заявка №{{ rental_request.id }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h6>Объявление</h6>
+                        <p class="mb-0">
+                            <a href="{% url 'ads:detail' rental_request.ad.pk %}" class="text-decoration-none">
+                                <strong>{{ rental_request.ad.title }}</strong>
+                            </a>
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Статус</h6>
+                        <p class="mb-0">
+                            <span class="badge bg-{% if rental_request.status == 'pending' %}warning{% elif rental_request.status == 'accepted' %}success{% elif rental_request.status == 'rejected' %}danger{% else %}secondary{% endif %}">
+                                {{ rental_request.get_status_display }}
+                            </span>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <h6>Дата начала</h6>
+                        <p class="mb-0">{{ rental_request.start_date|date:"d.m.Y" }}</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h6>Дата окончания</h6>
+                        <p class="mb-0">{{ rental_request.end_date|date:"d.m.Y" }}</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h6>Стоимость</h6>
+                        <p class="mb-0 text-primary fw-bold">{{ rental_request.total_price }} ₽</p>
+                    </div>
+                </div>
+
+                {% if rental_request.comment %}
+                    <div class="mb-4">
+                        <h6>Комментарий</h6>
+                        <p class="mb-0">{{ rental_request.comment }}</p>
+                    </div>
+                {% endif %}
+
+                <hr>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>
+                            <i class="bi bi-person-circle"></i> 
+                            {% if user == rental_request.ad.owner %}Арендатор{% else %}Владелец{% endif %}
+                        </h6>
+                        {% if rental_request.ad.owner == user %}
+                            <p class="mb-0">{{ rental_request.renter.username }}</p>
+                            {% if rental_request.status == 'pending' %}
+                                <form method="post" action="{% url 'ads:send_message' rental_request.renter.pk %}" class="mt-2">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="ad_id" value="{{ rental_request.ad.pk }}">
+                                    <div class="input-group">
+                                        <input type="text" name="body" class="form-control" placeholder="Сообщение..." required>
+                                        <button type="submit" class="btn btn-outline-primary">
+                                            <i class="bi bi-send"></i> Отправить
+                                        </button>
+                                    </div>
+                                </form>
+                            {% endif %}
+                        {% else %}
+                            <p class="mb-0">{{ rental_request.ad.owner.username }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-calendar"></i> Даты</h6>
+                        <p class="mb-0">
+                            Создана: {{ rental_request.created_at|date:"d.m.Y H:i" }}<br>
+                            Обновлена: {{ rental_request.updated_at|date:"d.m.Y H:i" }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        {% if user == rental_request.ad.owner and rental_request.status == 'pending' %}
+            <div class="card mb-3">
+                <div class="card-header bg-warning">
+                    <h6 class="mb-0"><i class="bi bi-lightning"></i> Действия</h6>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{% url 'ads:respond_to_request' rental_request.pk %}" class="mb-2">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="accept">
+                        <button type="submit" class="btn btn-success w-100 mb-2">
+                            <i class="bi bi-check-circle"></i> Подтвердить аренду
+                        </button>
+                    </form>
+                    <form method="post" action="{% url 'ads:respond_to_request' rental_request.pk %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="reject">
+                        <button type="submit" class="btn btn-danger w-100">
+                            <i class="bi bi-x-circle"></i> Отклонить заявку
+                        </button>
+                    </form>
+                </div>
+            </div>
+        {% endif %}
+
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-info-circle"></i> Информация</h6>
+            </div>
+            <div class="card-body">
+                <p class="mb-2">
+                    <small>
+                        После подтверждения заявки объявление автоматически получит статус 
+                        <strong>"Сдано"</strong> и станет недоступным для бронирования на указанные даты.
+                    </small>
+                </p>
+                <a href="{% url 'ads:my_requests' %}" class="btn btn-outline-secondary w-100">
+                    <i class="bi bi-arrow-left"></i> К списку заявок
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
