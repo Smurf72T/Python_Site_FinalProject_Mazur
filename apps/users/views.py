@@ -33,10 +33,17 @@ def profile(request):
         status='accepted'
     ).select_related('ad').order_by('-start_date')
     
+    # Сданные объявления (где пользователь - владелец, и есть подтверждённая заявка)
+    rented_out_ads = RentalRequest.objects.filter(
+        ad__owner=request.user,
+        status='accepted'
+    ).select_related('ad', 'renter').order_by('-start_date')
+    
     return render(request, 'registration/profile.html', {
         'user': request.user, 
         'ads': ads,
-        'rented_ads': rented_ads
+        'rented_ads': rented_ads,
+        'rented_out_ads': rented_out_ads
     })
 
 

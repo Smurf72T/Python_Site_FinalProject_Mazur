@@ -111,6 +111,11 @@
                     <i class="bi bi-calendar-check"></i> Арендовано ({{ rented_ads.count }})
                 </button>
             </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="rented-out-tab" data-bs-toggle="tab" data-bs-target="#rented-out" type="button">
+                    <i class="bi bi-calendar-x"></i> Сданные ({{ rented_out_ads.count }})
+                </button>
+            </li>
         </ul>
 
         <div class="tab-content" id="profileTabsContent">
@@ -243,6 +248,92 @@
                                 <p class="text-muted mt-3">Вы ещё ничего не арендовали</p>
                                 <a href="{% url 'ads:home' %}" class="btn btn-primary mt-2">
                                     <i class="bi bi-search"></i> Найти объявления
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Сданные объявления -->
+            <div class="tab-pane fade" id="rented-out" role="tabpanel">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-calendar-x"></i> Сданные объявления</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if rented_out_ads %}
+                            <div class="list-group">
+                                {% for rental in rented_out_ads %}
+                                    <div class="list-group-item list-group-item-action">
+                                        <div class="d-flex w-100 justify-content-between align-items-start">
+                                            <div class="flex-grow-1">
+                                                <h6 class="mb-1">
+                                                    <a href="{% url 'ads:detail' rental.ad.pk %}" class="text-decoration-none">
+                                                        {{ rental.ad.title }}
+                                                    </a>
+                                                </h6>
+                                                <div class="mb-2">
+                                                    <span class="badge bg-info">
+                                                        <i class="bi bi-check-circle"></i> Сдано в аренду
+                                                    </span>
+                                                </div>
+                                                <div class="row g-2">
+                                                    <div class="col-md-3">
+                                                        <small class="text-muted">
+                                                            <i class="bi bi-person"></i> Арендатор
+                                                        </small>
+                                                        <p class="mb-0 fw-bold">{{ rental.renter.username }}</p>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <small class="text-muted">
+                                                            <i class="bi bi-calendar"></i> Начало
+                                                        </small>
+                                                        <p class="mb-0 fw-bold">{{ rental.start_date|date:"d.m.Y" }}</p>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <small class="text-muted">
+                                                            <i class="bi bi-calendar"></i> Окончание
+                                                        </small>
+                                                        <p class="mb-0 fw-bold">{{ rental.end_date|date:"d.m.Y" }}</p>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <small class="text-muted">
+                                                            <i class="bi bi-clock"></i> Дней
+                                                        </small>
+                                                        <p class="mb-0 fw-bold">{{ rental.rental_days }} дн.</p>
+                                                    </div>
+                                                </div>
+                                                <p class="mb-0 mt-2">
+                                                    <small class="text-muted">
+                                                        <i class="bi bi-cash"></i> Общая стоимость: 
+                                                        <span class="text-primary fw-bold">{{ rental.total_price }} ₽</span>
+                                                    </small>
+                                                </p>
+                                            </div>
+                                            <div class="ms-3 text-end">
+                                                <a href="{% url 'ads:detail' rental.ad.pk %}" class="btn btn-sm btn-outline-primary">
+                                                    <i class="bi bi-eye"></i> Просмотр
+                                                </a>
+                                                <form method="post" action="{% url 'ads:send_message' rental.renter.pk %}" class="mt-2">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="ad_id" value="{{ rental.ad.pk }}">
+                                                    <input type="hidden" name="body" value="Здравствуйте! По поводу аренды &quot;{{ rental.ad.title }}&quot;.">
+                                                    <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                                        <i class="bi bi-chat"></i> Написать
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-center py-5">
+                                <i class="bi bi-inbox" style="font-size: 4rem; color: #ccc;"></i>
+                                <p class="text-muted mt-3">У вас пока нет сданных объявлений</p>
+                                <a href="{% url 'ads:create' %}" class="btn btn-primary mt-2">
+                                    <i class="bi bi-plus-circle"></i> Разместить объявление
                                 </a>
                             </div>
                         {% endif %}
