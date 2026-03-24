@@ -1,0 +1,38 @@
+# Tests Dockerfile
+FROM python:3.14-slim
+
+WORKDIR /app
+
+# Установка зависимостей системы
+RUN apt-get update && apt-get install -y \
+    postgresql-client \
+    libpq-dev \
+    gcc \
+    python3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Копирование requirements
+COPY requirements.txt .
+
+# Установка Python зависимостей (включая pytest)
+RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir pytest pytest-django pytest-cov black flake8 isort
+
+# Копирование кода
+COPY . .
+
+# Создание директорий
+RUN mkdir -p /app/media /app/staticfiles /app/logs /app/test_results
+
+# Переменные окружения
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV DJANGO_SETTINGS_MODULE=config.settings
+ENV PYTEST_ADDOPTS="--cov=apps --cov-report=html:/app/test_results/htmlcov --cov-report=term-missing --html=/app/test_results/report.html --self-contained-html"
+
+# Скрипт запуска тестов
+COPY docker/run_tests.sh /run_tests.sh
+RUN chmod +x /run_tests.sh
+
+# Запуск тестов
+CMD ["/run_tests.sh"]

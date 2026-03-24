@@ -1,0 +1,108 @@
+version: '3.8'
+
+services:
+  # ============================================
+  # База данных (PostgreSQL)
+  # ============================================
+  db:
+    build:
+      context: .
+      dockerfile: Dockerfile.db
+    container_name: rental_db
+    environment:
+      POSTGRES_DB: rental_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/db_init.sh:/docker-entrypoint-initdb.d/init.sh
+    ports:
+      - "5432:5432"
+    networks:
+      - rental_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ============================================
+  # Backend (основное приложение)
+  # ============================================
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: rental_backend
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings
+      DATABASE_URL: postgres://postgres:postgres@db:5432/rental_db
+    volumes:
+      - ./media:/app/media
+      - ./staticfiles:/app/staticfiles
+      - ./logs:/app/logs
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - rental_network
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py collectstatic --noinput &&
+             gunicorn --bind 0.0.0.0:8000 --workers 3 config.wsgi:application"
+
+  # ============================================
+  # Django Admin (отдельный контейнер)
+  # ============================================
+  admin:
+    build:
+      context: .
+      dockerfile: Dockerfile.admin
+    container_name: rental_admin
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings
+      DATABASE_URL: postgres://postgres:postgres@db:5432/rental_db
+    volumes:
+      - ./media:/app/media
+      - ./staticfiles:/app/staticfiles
+    ports:
+      - "8001:8001"
+    depends_on:
+      db:
+        condition: service_healthy
+      backend:
+        condition: service_started
+    networks:
+      - rental_network
+
+  # ============================================
+  # Тесты (автоматический запуск после старта)
+  # ============================================
+  tests:
+    build:
+      context: .
+      dockerfile: Dockerfile.tests
+    container_name: rental_tests
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings
+      DATABASE_URL: postgres://postgres:postgres@db:5432/rental_db
+    volumes:
+      - ./test_results:/app/test_results
+    depends_on:
+      db:
+        condition: service_healthy
+      backend:
+        condition: service_started
+    networks:
+      - rental_network
+    # Тесты запускаются автоматически при старте контейнера
+
+networks:
+  rental_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local

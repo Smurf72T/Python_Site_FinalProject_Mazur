@@ -1,0 +1,42 @@
+# Django Admin Dockerfile
+FROM python:3.14-slim
+
+WORKDIR /app
+
+# Установка зависимостей системы
+RUN apt-get update && apt-get install -y \
+    postgresql-client \
+    libpq-dev \
+    gcc \
+    python3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Копирование requirements
+COPY requirements.txt .
+
+# Установка Python зависимостей
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Копирование кода
+COPY . .
+
+# Создание директорий
+RUN mkdir -p /app/media /app/staticfiles /app/logs
+
+# Сборка статики
+RUN python manage.py collectstatic --noinput
+
+# Переменные окружения
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV DJANGO_SETTINGS_MODULE=config.settings
+
+# Порт
+EXPOSE 8001
+
+# Скрипт инициализации
+COPY docker/admin_init.sh /admin_init.sh
+RUN chmod +x /admin_init.sh
+
+# Запуск с инициализацией
+CMD ["/admin_init.sh"]

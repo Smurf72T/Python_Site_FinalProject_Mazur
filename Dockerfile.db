@@ -1,0 +1,14 @@
+# Database Dockerfile
+FROM postgres:15-alpine
+
+# Переменные окружения PostgreSQL
+ENV POSTGRES_DB=rental_db
+ENV POSTGRES_USER=postgres
+ENV POSTGRES_PASSWORD=postgres
+
+# Копирование скрипта инициализации
+COPY docker/db_init.sh /docker-entrypoint-initdb.d/init.sh
+RUN chmod +x /docker-entrypoint-initdb.d/init.sh
+
+# Порт PostgreSQL
+EXPOSE 5432

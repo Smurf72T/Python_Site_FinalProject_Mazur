@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Media и статика
+media/
+staticfiles/
+
+# Тесты
+.coverage
+htmlcov/
+.pytest_cache/
+test_results/
+*.cover
+
+# Docker
+docker-compose.override.yml
+
+# Прочее
+.git/
+.gitignore
+.qwen/
+*.md
+!requirements.txt
