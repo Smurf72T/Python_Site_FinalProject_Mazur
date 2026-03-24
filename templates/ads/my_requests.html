@@ -67,14 +67,30 @@
                                         </form>
                                     </div>
                                     <!-- Кнопка написать сообщение -->
-                                    <form method="post" action="{% url 'ads:send_message' req.renter.pk %}" class="mt-2">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="ad_id" value="{{ req.ad.pk }}">
-                                        <input type="hidden" name="body" value="Здравствуйте! По поводу вашей заявки на аренду &quot;{{ req.ad.title }}&quot;.">
-                                        <button type="submit" class="btn btn-sm btn-outline-primary">
-                                            <i class="bi bi-chat"></i> Написать
-                                        </button>
-                                    </form>
+                                    <button type="button" class="btn btn-sm btn-outline-primary mt-2" data-bs-toggle="modal" data-bs-target="#messageModal{{ req.id }}">
+                                        <i class="bi bi-chat"></i> Написать
+                                    </button>
+                                    <div class="modal" id="messageModal{{ req.id }}" tabindex="-1">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title">Написать сообщение</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <form method="post" action="{% url 'ads:send_message' req.renter.pk %}">
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="ad_id" value="{{ req.ad.pk }}">
+                                                        <input type="hidden" name="subject" value="По поводу заявки на &quot;{{ req.ad.title }}&quot;">
+                                                        <textarea name="body" class="form-control" rows="4" placeholder="Введите текст сообщения..." required></textarea>
+                                                        <button type="submit" class="btn btn-primary w-100 mt-2">
+                                                            <i class="bi bi-send"></i> Отправить
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 {% elif req.status == 'accepted' %}
                                     <span class="badge bg-success">
                                         <i class="bi bi-check-circle"></i> Подтверждено
@@ -132,14 +148,30 @@
                                         <i class="bi bi-check-circle"></i> Подтверждено
                                     </span>
                                     <!-- Кнопка написать сообщение -->
-                                    <form method="post" action="{% url 'ads:send_message' req.ad.owner.pk %}" class="mt-2">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="ad_id" value="{{ req.ad.pk }}">
-                                        <input type="hidden" name="body" value="Здравствуйте! По поводу подтверждённой аренды &quot;{{ req.ad.title }}&quot;.">
-                                        <button type="submit" class="btn btn-sm btn-outline-primary">
-                                            <i class="bi bi-chat"></i> Написать владельцу
-                                        </button>
-                                    </form>
+                                    <button type="button" class="btn btn-sm btn-outline-primary mt-2" data-bs-toggle="modal" data-bs-target="#messageModalOut{{ req.id }}">
+                                        <i class="bi bi-chat"></i> Написать
+                                    </button>
+                                    <div class="modal" id="messageModalOut{{ req.id }}" tabindex="-1">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title">Написать сообщение</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <form method="post" action="{% url 'ads:send_message' req.ad.owner.pk %}">
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="ad_id" value="{{ req.ad.pk }}">
+                                                        <input type="hidden" name="subject" value="По поводу аренды &quot;{{ req.ad.title }}&quot;">
+                                                        <textarea name="body" class="form-control" rows="4" placeholder="Введите текст сообщения..." required></textarea>
+                                                        <button type="submit" class="btn btn-primary w-100 mt-2">
+                                                            <i class="bi bi-send"></i> Отправить
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 {% elif req.status == 'rejected' %}
                                     <span class="badge bg-danger">
                                         <i class="bi bi-x-circle"></i> Отклонено
