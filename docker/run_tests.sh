@@ -7,8 +7,16 @@ echo "============================================"
 
 # Ожидание готовности базы данных
 echo "Ожидание готовности базы данных..."
+max_attempts=30
+attempt=0
+
 until python manage.py migrate --check 2>/dev/null; do
-    echo "База данных ещё не готова. Ожидание..."
+    attempt=$((attempt + 1))
+    echo "База данных ещё не готова. Попытка $attempt/$max_attempts..."
+    if [ $attempt -ge $max_attempts ]; then
+        echo "❌ Превышено время ожидания базы данных"
+        exit 1
+    fi
     sleep 2
 done
 

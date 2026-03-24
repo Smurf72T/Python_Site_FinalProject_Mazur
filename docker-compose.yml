@@ -21,10 +21,11 @@ services:
     networks:
       - rental_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+      test: ["CMD-SHELL", "pg_isready -U postgres -d rental_db"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
 
   # ============================================
   # Backend (основное приложение)
@@ -48,8 +49,14 @@ services:
         condition: service_healthy
     networks:
       - rental_network
+    healthcheck:
+      test: ["CMD-SHELL", "python manage.py check 2>&1 | grep -q '0 issues' || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     command: >
-      sh -c "python manage.py migrate &&
+      sh -c "python manage.py migrate --noinput &&
              python manage.py collectstatic --noinput &&
              gunicorn --bind 0.0.0.0:8000 --workers 3 config.wsgi:application"
 
@@ -73,7 +80,7 @@ services:
       db:
         condition: service_healthy
       backend:
-        condition: service_started
+        condition: service_healthy
     networks:
       - rental_network
 
@@ -88,16 +95,18 @@ services:
     environment:
       DJANGO_SETTINGS_MODULE: config.settings
       DATABASE_URL: postgres://postgres:postgres@db:5432/rental_db
+      PYTEST_ADDOPTS: "--cov=apps --cov-report=html:/app/test_results/htmlcov --cov-report=term-missing --html=/app/test_results/report.html --self-contained-html"
     volumes:
       - ./test_results:/app/test_results
     depends_on:
       db:
         condition: service_healthy
       backend:
-        condition: service_started
+        condition: service_healthy
     networks:
       - rental_network
     # Тесты запускаются автоматически при старте контейнера
+    # Контейнер завершится после выполнения тестов
 
 networks:
   rental_network:
