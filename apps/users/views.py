@@ -105,6 +105,13 @@ def messages_list(request):
         reverse=True
     )
     
+    # Помечаем все уведомления о сообщениях как прочитанные
+    Notification.objects.filter(
+        user=request.user,
+        title='Новое сообщение',
+        is_read=False
+    ).update(is_read=True)
+    
     return render(request, 'registration/messages.html', {
         'conversations': conversations_list
     })
