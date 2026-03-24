@@ -102,6 +102,11 @@ def create_rental_request(request, pk):
     """
     ad = get_object_or_404(Ad, pk=pk)
     
+    # Проверка: пользователь не может арендовать своё объявление
+    if ad.owner == request.user:
+        messages.error(request, 'Это ваше объявление. Нельзя арендовать собственное объявление.')
+        return redirect('ads:detail', pk=pk)
+    
     if request.method == 'POST':
         start_date = request.POST.get('start_date')
         end_date = request.POST.get('end_date')
