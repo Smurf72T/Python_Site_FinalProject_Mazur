@@ -179,4 +179,7 @@ cython_debug/
 # Media files
 media/
 
+# Static files
+staticfiles/
+
 logs/  
