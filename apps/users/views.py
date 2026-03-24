@@ -1,7 +1,10 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from .forms import RegistrationForm, ProfileForm
+from apps.ads.models import Ad
+
 
 def register(request):
     if request.method == 'POST':
@@ -16,13 +19,25 @@ def register(request):
         form = RegistrationForm()
     return render(request, 'registration/register.html', {'form': form})
 
+
+@login_required
+def profile(request):
+    """
+    Страница профиля пользователя с отображением информации и объявлений.
+    """
+    ads = Ad.objects.filter(owner=request.user).order_by('-created_at')
+    return render(request, 'registration/profile.html', {'user': request.user, 'ads': ads})
+
+
 @login_required
 def profile_edit(request):
     if request.method == 'POST':
         form = ProfileForm(request.POST, instance=request.user.profile)
         if form.is_valid():
             form.save()
-            return redirect('ads:home')
+            return redirect('users:profile')
     else:
         form = ProfileForm(instance=request.user.profile)
-    return render(request, 'registration/profile_edit.html', {'form': form})
+    
+    ads = Ad.objects.filter(owner=request.user).order_by('-created_at')
+    return render(request, 'registration/profile_edit.html', {'form': form, 'ads': ads})
