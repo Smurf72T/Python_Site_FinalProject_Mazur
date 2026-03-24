@@ -1,5 +1,7 @@
 from django.contrib import admin
+from django.utils.html import format_html
 from .models import Ad, Category, Review, RentalRequest, AdImage, Favorite, Message, Notification
+
 
 @admin.register(Ad)
 class AdAdmin(admin.ModelAdmin):
@@ -7,6 +9,27 @@ class AdAdmin(admin.ModelAdmin):
     list_filter = ('status', 'category', 'size')
     search_fields = ('title', 'description')
     readonly_fields = ('views_count', 'created_at', 'updated_at')
+    
+    # Массовые действия
+    actions = ['approve_ads', 'reject_ads', 'mark_as_rented']
+    
+    def approve_ads(self, request, queryset):
+        """Опубликовать выбранные объявления."""
+        updated = queryset.update(status='approved')
+        self.message_user(request, f'Опубликовано {updated} объявлений.')
+    approve_ads.short_description = '✓ Опубликовать выбранные объявления'
+    
+    def reject_ads(self, request, queryset):
+        """Отклонить выбранные объявления."""
+        updated = queryset.update(status='rejected')
+        self.message_user(request, f'Отклонено {updated} объявлений.')
+    reject_ads.short_description = '✗ Отклонить выбранные объявления'
+    
+    def mark_as_rented(self, request, queryset):
+        """Отметить выбранные объявления как сданные."""
+        updated = queryset.update(status='rented')
+        self.message_user(request, f'Отмечено как сданные {updated} объявлений.')
+    mark_as_rented.short_description = '→ Отметить как сданные'
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
