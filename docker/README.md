@@ -4,9 +4,10 @@
 
 | Контейнер | Порт | Описание |
 |-----------|------|----------|
+| `rental_nginx` | 80 | Nginx reverse proxy (единая точка входа) |
 | `rental_db` | 5432 | PostgreSQL база данных |
-| `rental_backend` | 8000 | Основное приложение |
-| `rental_admin` | 8001 | Django админка (отдельно) |
+| `rental_backend` | - | Основное приложение (доступ через nginx) |
+| `rental_admin` | - | Django админка (доступ через nginx) |
 | `rental_tests` | - | Автоматические тесты |
 
 ## Быстрый старт
@@ -23,29 +24,17 @@ docker-compose up --build
 docker-compose ps
 ```
 
-### 3. Просмотр логов
-
-```bash
-# Все логи
-docker-compose logs -f
-
-# Лог конкретного контейнера
-docker-compose logs -f backend
-docker-compose logs -f admin
-docker-compose logs -f tests
-```
-
 ## Доступ к сервисам
 
-### Основное приложение
-- URL: http://localhost:8000
-- Описание: Основной сайт аренды одежды
+### Основной сайт
+- **URL:** http://localhost/
+- **Описание:** Основной сайт аренды одежды
 
 ### Django Admin
-- URL: http://localhost:8001/admin/
-- Login: `admin`
-- Password: `admin123`
-- Email: `admin@admin.admin`
+- **URL:** http://localhost/admin/
+- **Login:** `admin`
+- **Password:** `admin123`
+- **Email:** `admin@admin.admin`
 
 ### База данных
 - Host: localhost

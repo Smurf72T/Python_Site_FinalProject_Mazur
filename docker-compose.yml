@@ -1,5 +1,31 @@
 services:
   # ============================================
+  # Nginx - Reverse Proxy
+  # ============================================
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile.nginx
+    container_name: rental_nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./staticfiles:/app/staticfiles
+      - ./media:/app/media
+    depends_on:
+      backend:
+        condition: service_started
+      admin:
+        condition: service_started
+    networks:
+      - rental_network
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # ============================================
   # База данных (PostgreSQL)
   # ============================================
   db:
