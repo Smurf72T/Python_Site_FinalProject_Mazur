@@ -117,9 +117,27 @@ class FavoriteAdmin(admin.ModelAdmin):
 
 @admin.register(Message)
 class MessageAdmin(admin.ModelAdmin):
-    list_display = ("sender", "recipient", "subject", "is_read", "created_at")
+    list_display = (
+        "sender_username",
+        "recipient_username",
+        "subject",
+        "is_read",
+        "created_at",
+    )
     list_filter = ("is_read",)
     search_fields = ("sender__username", "recipient__username", "subject")
+
+    def sender_username(self, obj):
+        """Имя отправителя."""
+        return obj.sender.username if obj.sender else "—"
+
+    sender_username.short_description = "Отправитель"
+
+    def recipient_username(self, obj):
+        """Имя получателя."""
+        return obj.recipient.username if obj.recipient else "—"
+
+    recipient_username.short_description = "Получатель"
 
 
 @admin.register(Notification)
