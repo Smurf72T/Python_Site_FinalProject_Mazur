@@ -119,11 +119,9 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'users:messages' %}">
                                 <i class="bi bi-chat-square-text"></i> Сообщения
-                                {% with user.notifications.filter.is_read=False|length as unread_count %}
-                                    {% if unread_count > 0 %}
-                                        <span class="badge bg-danger">{{ unread_count }}</span>
-                                    {% endif %}
-                                {% endwith %}
+                                {% if unread_count > 0 %}
+                                    <span class="badge bg-danger">{{ unread_count }}</span>
+                                {% endif %}
                             </a>
                         </li>
                         <li class="nav-item">
