@@ -12,8 +12,11 @@
                     </a>
                     <span class="fw-bold">{{ other_user.username }}</span>
                 </div>
+                <button type="button" class="btn btn-sm btn-outline-primary" id="refreshBtn">
+                    <i class="bi bi-arrow-clockwise"></i> Обновить
+                </button>
             </div>
-            <div class="card-body" style="max-height: 500px; overflow-y: auto;">
+            <div class="card-body" id="chatBody" style="max-height: 500px; overflow-y: auto;">
                 {% if messages %}
                     {% for message in messages %}
                         <div class="d-flex {% if message.sender == user %}justify-content-end{% else %}justify-content-start{% endif %} mb-3">
@@ -42,7 +45,7 @@
                 {% endif %}
             </div>
             <div class="card-footer">
-                <form method="post">
+                <form method="post" id="messageForm">
                     {% csrf_token %}
                     <div class="input-group">
                         <textarea name="body" class="form-control" rows="2" placeholder="Введите сообщение..." required></textarea>
@@ -57,10 +60,74 @@
 </div>
 
 <script>
+    const chatBody = document.getElementById('chatBody');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const messageForm = document.getElementById('messageForm');
+    let lastMessageCount = {{ messages.count }};
+    
     // Прокрутка вниз при загрузке
-    document.addEventListener('DOMContentLoaded', function() {
-        const chatBody = document.querySelector('.card-body');
+    function scrollToBottom() {
         chatBody.scrollTop = chatBody.scrollHeight;
+    }
+    scrollToBottom();
+    
+    // Автообновление каждые 3 секунды
+    function checkNewMessages() {
+        fetch(window.location.href, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.text())
+        .then(html => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const newChatBody = doc.getElementById('chatBody');
+            if (newChatBody) {
+                const newMessageCount = newChatBody.querySelectorAll('.d-flex').length;
+                if (newMessageCount > lastMessageCount) {
+                    chatBody.innerHTML = newChatBody.innerHTML;
+                    lastMessageCount = newMessageCount;
+                    scrollToBottom();
+                }
+            }
+        })
+        .catch(error => console.log('Ошибка обновления:', error));
+    }
+    
+    // Проверка новых сообщений каждые 3 секунды
+    const refreshInterval = setInterval(checkNewMessages, 3000);
+    
+    // Кнопка обновления
+    refreshBtn.addEventListener('click', function() {
+        checkNewMessages();
+    });
+    
+    // Отправка формы без перезагрузки
+    messageForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        
+        fetch(window.location.href, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.text())
+        .then(html => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const newChatBody = doc.getElementById('chatBody');
+            if (newChatBody) {
+                chatBody.innerHTML = newChatBody.innerHTML;
+                lastMessageCount = newChatBody.querySelectorAll('.d-flex').length;
+                scrollToBottom();
+                messageForm.querySelector('textarea').value = '';
+            }
+        })
+        .catch(error => console.log('Ошибка отправки:', error));
     });
 </script>
 {% endblock %}
