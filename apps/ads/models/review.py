@@ -1,8 +1,9 @@
 """
 Модель отзыва об объявлении.
 """
-from django.db import models
+
 from django.contrib.auth.models import User
+from django.db import models
 
 
 class Review(models.Model):
@@ -12,31 +13,24 @@ class Review(models.Model):
     Пользователи могут оставлять отзывы и оценки к объявлениям.
     Рейтинг влияет на общий рейтинг владельца объявления.
     """
+
     ad = models.ForeignKey(
-        'Ad',
+        "Ad",
         on_delete=models.CASCADE,
-        related_name='reviews',
-        verbose_name='Объявление'
+        related_name="reviews",
+        verbose_name="Объявление",
     )
-    author = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        verbose_name='Автор'
-    )
+    author = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Автор")
     rating = models.IntegerField(
-        choices=[(i, i) for i in range(1, 6)],
-        verbose_name='Рейтинг'
+        choices=[(i, i) for i in range(1, 6)], verbose_name="Рейтинг"
     )
-    comment = models.TextField(verbose_name='Комментарий')
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name='Дата создания'
-    )
+    comment = models.TextField(verbose_name="Комментарий")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
 
     class Meta:
-        verbose_name = 'Отзыв'
-        verbose_name_plural = 'Отзывы'
-        ordering = ['-created_at']
+        verbose_name = "Отзыв"
+        verbose_name_plural = "Отзывы"
+        ordering = ["-created_at"]
 
     def __str__(self):
         return f"Review by {self.author.username} on {self.ad.title}"

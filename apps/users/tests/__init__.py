@@ -7,18 +7,19 @@
 - test_views: Тесты представлений
 - base: Базовые классы для тестов
 """
+
+from .test_forms import ProfileFormTest, RegistrationFormTest
 from .test_models import ProfileModelTest
-from .test_forms import RegistrationFormTest, ProfileFormTest
-from .test_views import UserAuthViewsTest, ProfileViewsTest, MessageViewsTest
+from .test_views import MessageViewsTest, ProfileViewsTest, UserAuthViewsTest
 
 __all__ = [
     # Models
-    'ProfileModelTest',
+    "ProfileModelTest",
     # Forms
-    'RegistrationFormTest',
-    'ProfileFormTest',
+    "RegistrationFormTest",
+    "ProfileFormTest",
     # Views
-    'UserAuthViewsTest',
-    'ProfileViewsTest',
-    'MessageViewsTest',
+    "UserAuthViewsTest",
+    "ProfileViewsTest",
+    "MessageViewsTest",
 ]

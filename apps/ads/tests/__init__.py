@@ -8,43 +8,34 @@
 - test_services: Тесты сервисных функций
 - base: Базовые классы для тестов
 """
-from .test_models import (
-    CategoryModelTest,
-    AdModelTest,
-    ReviewModelTest,
-    RentalRequestModelTest,
-    AdImageModelTest,
-    FavoriteModelTest,
-    MessageModelTest,
-    NotificationModelTest,
-)
+
 from .test_forms import AdFormTest, ReviewFormTest
-from .test_views import (
-    HomeViewTest,
-    AdDetailViewTest,
-    AdManagementViewsTest,
-    RentalRequestViewsTest,
-)
+from .test_models import (AdImageModelTest, AdModelTest, CategoryModelTest,
+                          FavoriteModelTest, MessageModelTest,
+                          NotificationModelTest, RentalRequestModelTest,
+                          ReviewModelTest)
 from .test_services import ServicesTest
+from .test_views import (AdDetailViewTest, AdManagementViewsTest, HomeViewTest,
+                         RentalRequestViewsTest)
 
 __all__ = [
     # Models
-    'CategoryModelTest',
-    'AdModelTest',
-    'ReviewModelTest',
-    'RentalRequestModelTest',
-    'AdImageModelTest',
-    'FavoriteModelTest',
-    'MessageModelTest',
-    'NotificationModelTest',
+    "CategoryModelTest",
+    "AdModelTest",
+    "ReviewModelTest",
+    "RentalRequestModelTest",
+    "AdImageModelTest",
+    "FavoriteModelTest",
+    "MessageModelTest",
+    "NotificationModelTest",
     # Forms
-    'AdFormTest',
-    'ReviewFormTest',
+    "AdFormTest",
+    "ReviewFormTest",
     # Views
-    'HomeViewTest',
-    'AdDetailViewTest',
-    'AdManagementViewsTest',
-    'RentalRequestViewsTest',
+    "HomeViewTest",
+    "AdDetailViewTest",
+    "AdManagementViewsTest",
+    "RentalRequestViewsTest",
     # Services
-    'ServicesTest',
+    "ServicesTest",
 ]
