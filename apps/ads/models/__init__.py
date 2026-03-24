@@ -7,6 +7,7 @@
 
 from .ad import Ad
 from .category import Category
+from .city import City
 from .gallery import AdImage
 from .rental import RentalRequest
 from .review import Review
@@ -15,6 +16,7 @@ from .social import Favorite, Message, Notification
 __all__ = [
     "Category",
     "Ad",
+    "City",
     "Review",
     "RentalRequest",
     "AdImage",

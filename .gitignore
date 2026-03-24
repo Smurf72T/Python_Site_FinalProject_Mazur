@@ -186,3 +186,4 @@ logs/
 
 # Qwen Code settings
 .qwen/  
+.qwen/settings.json
