@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import Paginator
-from .models import Ad, Review
+from .models import Ad, Review, RentalRequest
 from .forms import AdForm, ReviewForm
 from .services import get_filtered_ads, approve_ad_instance, reject_ad_instance
 
@@ -93,3 +93,39 @@ def ad_detail(request, pk):
     else:
         form = ReviewForm()
     return render(request, 'ads/detail.html', {'ad': ad, 'form': form})
+
+
+@login_required
+def create_rental_request(request, pk):
+    """
+    Создать заявку на аренду объявления.
+    """
+    ad = get_object_or_404(Ad, pk=pk)
+    
+    if request.method == 'POST':
+        start_date = request.POST.get('start_date')
+        end_date = request.POST.get('end_date')
+        comment = request.POST.get('comment', '')
+        
+        if start_date and end_date:
+            from datetime import datetime
+            start = datetime.strptime(start_date, '%Y-%m-%d').date()
+            end = datetime.strptime(end_date, '%Y-%m-%d').date()
+            
+            if start > end:
+                messages.error(request, 'Дата начала не может быть позже даты окончания.')
+            else:
+                rental_request = RentalRequest(
+                    ad=ad,
+                    renter=request.user,
+                    start_date=start,
+                    end_date=end,
+                    comment=comment
+                )
+                rental_request.save()
+                messages.success(request, 'Заявка на аренду создана.')
+                return redirect('ads:detail', pk=pk)
+        else:
+            messages.error(request, 'Укажите даты аренды.')
+    
+    return redirect('ads:detail', pk=pk)
