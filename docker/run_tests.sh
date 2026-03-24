@@ -43,8 +43,6 @@ python -m pytest \
     --cov=apps \
     --cov-report=html:/app/test_results/htmlcov \
     --cov-report=term-missing \
-    --html=/app/test_results/report.html \
-    --self-contained-html \
     --no-migrations \
     -p no:warnings
 

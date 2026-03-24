@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # ============================================
   # База данных (PostgreSQL)
@@ -49,12 +47,6 @@ services:
         condition: service_healthy
     networks:
       - rental_network
-    healthcheck:
-      test: ["CMD-SHELL", "python manage.py check 2>&1 | grep -q '0 issues' || exit 1"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-      start_period: 15s
     command: >
       sh -c "python manage.py migrate --noinput &&
              python manage.py collectstatic --noinput &&
@@ -80,7 +72,7 @@ services:
       db:
         condition: service_healthy
       backend:
-        condition: service_healthy
+        condition: service_started
     networks:
       - rental_network
 
@@ -95,18 +87,19 @@ services:
     environment:
       DJANGO_SETTINGS_MODULE: config.settings
       DATABASE_URL: postgres://postgres:postgres@db:5432/rental_db
-      PYTEST_ADDOPTS: "--cov=apps --cov-report=html:/app/test_results/htmlcov --cov-report=term-missing --html=/app/test_results/report.html --self-contained-html"
+      PYTEST_ADDOPTS: "--cov=apps --cov-report=html:/app/test_results/htmlcov --cov-report=term-missing"
     volumes:
       - ./test_results:/app/test_results
     depends_on:
       db:
         condition: service_healthy
       backend:
-        condition: service_healthy
+        condition: service_started
     networks:
       - rental_network
     # Тесты запускаются автоматически при старте контейнера
     # Контейнер завершится после выполнения тестов
+    restart: "no"
 
 networks:
   rental_network:
