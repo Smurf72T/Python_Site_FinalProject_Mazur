@@ -343,12 +343,22 @@ class RentalRequest(models.Model):
     def save(self, *args, **kwargs):
         """
         Сохранить заявку с автоматическим расчётом стоимости.
-        
+
         Если total_price не установлена, вычисляется автоматически.
         """
         if not self.total_price:
             self.total_price = self.calculate_total_price()
         super().save(*args, **kwargs)
+
+    @property
+    def rental_days(self):
+        """
+        Количество дней аренды.
+
+        Returns:
+            int: Количество дней (включительно).
+        """
+        return (self.end_date - self.start_date).days + 1
 
 
 class AdImage(models.Model):
