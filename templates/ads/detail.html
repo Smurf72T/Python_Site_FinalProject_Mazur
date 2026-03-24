@@ -1,6 +1,25 @@
 {% extends 'base.html' %}
 {% block title %}{{ ad.title }} - Аренда Одежды{% endblock %}
 
+{% block extra_css %}
+<style>
+    .modal-backdrop.show {
+        z-index: 9998 !important;
+        opacity: 0.5 !important;
+    }
+    .modal.show {
+        z-index: 9999 !important;
+    }
+    .modal-dialog {
+        z-index: 10000 !important;
+    }
+    .modal-content {
+        z-index: 10001 !important;
+        background: white !important;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="row">
     <!-- Изображение -->
@@ -219,7 +238,9 @@
         {% endif %}
     </div>
 </div>
+{% endblock %}
 
+{% block modals %}
 <!-- Модальное окно аренды -->
 <div class="modal fade" id="rentalModal" tabindex="-1" aria-labelledby="rentalModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -260,47 +281,37 @@
         </div>
     </div>
 </div>
+{% endblock %}
 
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const rentButton = document.getElementById('rentButton');
-        const rentalModal = document.getElementById('rentalModal');
+        const modalEl = document.getElementById('rentalModal');
         
-        if (rentButton && rentalModal) {
-            const modal = new bootstrap.Modal(rentalModal, {
-                backdrop: true,
-                keyboard: true
-            });
-            
-            // Открытие модального окна по клику
+        console.log('Bootstrap version:', typeof bootstrap);
+        console.log('Modal element:', modalEl);
+        console.log('Rent button:', rentButton);
+        
+        if (rentButton && modalEl && typeof bootstrap !== 'undefined') {
             rentButton.addEventListener('click', function() {
+                console.log('Button clicked, showing modal');
+                const modal = new bootstrap.Modal(modalEl, {
+                    backdrop: true,
+                    keyboard: true
+                });
                 modal.show();
             });
-            
-            // Обработка закрытия модального окна
-            rentalModal.addEventListener('hidden.bs.modal', function() {
-                document.body.classList.remove('modal-open');
-                const backdrop = document.querySelector('.modal-backdrop');
-                if (backdrop) {
-                    backdrop.remove();
-                }
-            });
         }
-        
-        // Установка минимальной даты - сегодня
+
+        // Даты
         const today = new Date().toISOString().split('T')[0];
         const startDateInput = document.getElementById('start_date');
         const endDateInput = document.getElementById('end_date');
-        
-        if (startDateInput) {
-            startDateInput.min = today;
-        }
-        if (endDateInput) {
-            endDateInput.min = today;
-        }
-        
-        // При изменении даты начала, обновляем минимальную дату окончания
+
+        if (startDateInput) startDateInput.min = today;
+        if (endDateInput) endDateInput.min = today;
+
         if (startDateInput && endDateInput) {
             startDateInput.addEventListener('change', function() {
                 endDateInput.min = this.value;
@@ -308,5 +319,4 @@
         }
     });
 </script>
-{% endblock %}
 {% endblock %}
