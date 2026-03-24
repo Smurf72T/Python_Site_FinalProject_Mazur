@@ -3,7 +3,7 @@ from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from .forms import RegistrationForm, ProfileForm
-from apps.ads.models import Ad
+from apps.ads.models import Ad, RentalRequest
 
 
 def register(request):
@@ -26,7 +26,18 @@ def profile(request):
     Страница профиля пользователя с отображением информации и объявлений.
     """
     ads = Ad.objects.filter(owner=request.user).order_by('-created_at')
-    return render(request, 'registration/profile.html', {'user': request.user, 'ads': ads})
+    
+    # Арендованные объявления (где пользователь - арендатор с подтверждённой заявкой)
+    rented_ads = RentalRequest.objects.filter(
+        renter=request.user, 
+        status='accepted'
+    ).select_related('ad').order_by('-start_date')
+    
+    return render(request, 'registration/profile.html', {
+        'user': request.user, 
+        'ads': ads,
+        'rented_ads': rented_ads
+    })
 
 
 @login_required
