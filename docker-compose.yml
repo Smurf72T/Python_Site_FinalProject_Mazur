@@ -36,6 +36,7 @@ services:
     environment:
       DJANGO_SETTINGS_MODULE: config.settings
       DATABASE_URL: postgres://postgres:postgres@db:5432/rental_db
+      ENABLE_ADMIN_URL: "False"  # Отключаем админку в backend
     volumes:
       - ./media:/app/media
       - ./staticfiles:/app/staticfiles
@@ -63,6 +64,7 @@ services:
     environment:
       DJANGO_SETTINGS_MODULE: config.settings
       DATABASE_URL: postgres://postgres:postgres@db:5432/rental_db
+      ENABLE_ADMIN_URL: "True"  # Включаем админку в admin контейнере
     volumes:
       - ./media:/app/media
       - ./staticfiles:/app/staticfiles

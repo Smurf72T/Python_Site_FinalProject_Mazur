@@ -102,3 +102,6 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGIN_REDIRECT_URL = "ads:home"
 LOGOUT_REDIRECT_URL = "ads:home"
 LOGIN_URL = "users:login"
+
+# Включить URL админки (False для backend контейнера, True для admin контейнера)
+ENABLE_ADMIN_URL = os.environ.get("ENABLE_ADMIN_URL", "True") == "True"
