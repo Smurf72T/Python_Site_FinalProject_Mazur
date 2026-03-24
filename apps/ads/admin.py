@@ -52,14 +52,18 @@ class AdImageAdmin(admin.ModelAdmin):
     list_display = ('image_preview', 'ad', 'is_main', 'caption', 'created_at')
     list_filter = ('is_main',)
     search_fields = ('ad__title', 'caption')
+    readonly_fields = ('image_preview',)
     
     def image_preview(self, obj):
         """Отображение миниатюры изображения."""
-        if obj.image:
-            return format_html(
-                '<img src="{}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;" />',
-                obj.image.url
-            )
+        if obj.image and hasattr(obj.image, 'url'):
+            try:
+                return format_html(
+                    '<img src="{}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;" />',
+                    obj.image.url
+                )
+            except:
+                return 'Ошибка загрузки'
         return 'Нет изображения'
     image_preview.short_description = 'Изображение'
 
