@@ -133,8 +133,7 @@
                     </a>
                 </div>
             {% elif ad.status == 'approved' %}
-                <button type="button" class="btn btn-primary btn-lg w-100" 
-                        id="rentButton" data-bs-toggle="modal" data-bs-target="#rentalModal">
+                <button type="button" class="btn btn-primary btn-lg w-100" id="rentButton">
                     <i class="bi bi-calendar-check"></i> Арендовать
                 </button>
             {% elif ad.status == 'rented' %}
@@ -264,13 +263,28 @@
 
 {% block extra_js %}
 <script>
-    // Инициализация модального окна при клике на кнопку
     document.addEventListener('DOMContentLoaded', function() {
         const rentButton = document.getElementById('rentButton');
-        if (rentButton) {
+        const rentalModal = document.getElementById('rentalModal');
+        
+        if (rentButton && rentalModal) {
+            const modal = new bootstrap.Modal(rentalModal, {
+                backdrop: true,
+                keyboard: true
+            });
+            
+            // Открытие модального окна по клику
             rentButton.addEventListener('click', function() {
-                const modal = new bootstrap.Modal(document.getElementById('rentalModal'));
                 modal.show();
+            });
+            
+            // Обработка закрытия модального окна
+            rentalModal.addEventListener('hidden.bs.modal', function() {
+                document.body.classList.remove('modal-open');
+                const backdrop = document.querySelector('.modal-backdrop');
+                if (backdrop) {
+                    backdrop.remove();
+                }
             });
         }
         
