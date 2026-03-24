@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block title %}Диалог с {{ other_user.username }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <a href="{% url 'users:messages' %}" class="btn btn-sm btn-outline-secondary me-2">
+                        <i class="bi bi-arrow-left"></i> Назад
+                    </a>
+                    <span class="fw-bold">{{ other_user.username }}</span>
+                </div>
+            </div>
+            <div class="card-body" style="max-height: 500px; overflow-y: auto;">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="d-flex {% if message.sender == user %}justify-content-end{% else %}justify-content-start{% endif %} mb-3">
+                            <div class="{% if message.sender == user %}bg-primary text-white{% else %}bg-light{% endif %} rounded p-3" 
+                                 style="max-width: 70%;">
+                                {% if message.subject %}
+                                    <small class="{% if message.sender == user %}text-light{% else %}text-muted{% endif %}">
+                                        {{ message.subject }}
+                                    </small>
+                                {% endif %}
+                                <p class="mb-1">{{ message.body|linebreaks }}</p>
+                                {% if message.ad %}
+                                    <a href="{% url 'ads:detail' message.ad.pk %}" 
+                                       class="small {% if message.sender == user %}text-light{% else %}text-primary{% endif %}">
+                                        <i class="bi bi-tag"></i> {{ message.ad.title }}
+                                    </a>
+                                {% endif %}
+                                <small class="{% if message.sender == user %}text-light{% else %}text-muted{% endif %} d-block mt-2">
+                                    {{ message.created_at|date:"d.m.Y H:i" }}
+                                </small>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-center text-muted py-4">Нет сообщений</p>
+                {% endif %}
+            </div>
+            <div class="card-footer">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="input-group">
+                        <textarea name="body" class="form-control" rows="2" placeholder="Введите сообщение..." required></textarea>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-send"></i> Отправить
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Прокрутка вниз при загрузке
+    document.addEventListener('DOMContentLoaded', function() {
+        const chatBody = document.querySelector('.card-body');
+        chatBody.scrollTop = chatBody.scrollHeight;
+    });
+</script>
+{% endblock %}

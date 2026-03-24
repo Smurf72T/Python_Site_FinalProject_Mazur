@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block title %}Сообщения{% endblock %}
+
+{% block content %}
+<h2 class="mb-4"><i class="bi bi-chat-square-text"></i> Сообщения</h2>
+
+<div class="card">
+    <div class="card-body">
+        {% if conversations %}
+            <div class="list-group list-group-flush">
+                {% for conv in conversations %}
+                    <a href="{% url 'users:message_detail' conv.user.pk %}" 
+                       class="list-group-item list-group-item-action {% if conv.unread_count > 0 %}bg-light{% endif %}">
+                        <div class="d-flex w-100 justify-content-between align-items-center">
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center mb-1">
+                                    {% if conv.user.profile.avatar %}
+                                        <img src="{{ conv.user.profile.avatar.url }}" 
+                                             alt="{{ conv.user.username }}"
+                                             class="rounded-circle me-2" 
+                                             style="width: 40px; height: 40px; object-fit: cover;">
+                                    {% else %}
+                                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2"
+                                             style="width: 40px; height: 40px; font-size: 1.2rem;">
+                                            {{ conv.user.username|first|upper }}
+                                        </div>
+                                    {% endif %}
+                                    <h6 class="mb-0">{{ conv.user.username }}</h6>
+                                    {% if conv.unread_count > 0 %}
+                                        <span class="badge bg-danger ms-2">{{ conv.unread_count }}</span>
+                                    {% endif %}
+                                </div>
+                                <p class="mb-0 text-muted small">
+                                    {{ conv.last_message.body|truncatechars:50 }}
+                                </p>
+                            </div>
+                            <div class="text-end">
+                                <small class="text-muted">
+                                    {{ conv.last_message.created_at|date:"d.m.Y H:i" }}
+                                </small>
+                                {% if conv.last_message.ad %}
+                                    <p class="mb-0 mt-1 small text-primary">
+                                        <i class="bi bi-tag"></i> {{ conv.last_message.ad.title|truncatechars:20 }}
+                                    </p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-inbox" style="font-size: 4rem; color: #ccc;"></i>
+                <p class="text-muted mt-3">У вас пока нет сообщений</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

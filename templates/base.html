@@ -117,13 +117,18 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'ads:my_requests' %}">
-                                <i class="bi bi-calendar-check"></i> Заявки
-                                {% with unread_count=user.notifications.filter.is_read.count %}
+                            <a class="nav-link" href="{% url 'users:messages' %}">
+                                <i class="bi bi-chat-square-text"></i> Сообщения
+                                {% with unread_count=user.notifications.filter.is_read=False.count %}
                                     {% if unread_count > 0 %}
                                         <span class="badge bg-danger">{{ unread_count }}</span>
                                     {% endif %}
                                 {% endwith %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'ads:my_requests' %}">
+                                <i class="bi bi-calendar-check"></i> Заявки
                             </a>
                         </li>
                         <li class="nav-item">
