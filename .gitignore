@@ -185,5 +185,10 @@ staticfiles/
 logs/
 
 # Qwen Code settings
-.qwen/  
+.qwen/
 .qwen/settings.json
+
+# Temporary files
+cookies.txt
+register_page.html
+$null
