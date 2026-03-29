@@ -106,10 +106,21 @@ SESSION_COOKIE_SECURE = False  # В development можно False
 SESSION_COOKIE_SAMESITE = "Lax"
 SESSION_COOKIE_HTTPONLY = True
 CSRF_TRUSTED_ORIGINS = [
+    "http://localhost",
+    "http://localhost:80",
     "http://localhost:8000",
     "http://localhost:8001",
-    "http://localhost",
+    "http://127.0.0.1",
+    "http://127.0.0.1:80",
+    "http://127.0.0.1:8000",
+    "http://127.0.0.1:8001",
 ]
+
+# Дополнительные настройки для CSRF
+CSRF_COOKIE_DOMAIN = None
+CSRF_COOKIE_PATH = "/"
+SESSION_COOKIE_DOMAIN = None
+SESSION_COOKIE_PATH = "/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGIN_REDIRECT_URL = "ads:home"
