@@ -102,6 +102,7 @@ MEDIA_ROOT = BASE_DIR / "media"
 CSRF_COOKIE_SECURE = False  # В development можно False
 CSRF_COOKIE_SAMESITE = "Lax"
 CSRF_COOKIE_HTTPONLY = False  # Разрешить доступ из JavaScript
+CSRF_USE_SESSIONS = False  # CSRF токен в cookie, а не в сессии
 SESSION_COOKIE_SECURE = False  # В development можно False
 SESSION_COOKIE_SAMESITE = "Lax"
 SESSION_COOKIE_HTTPONLY = True
