@@ -15,25 +15,29 @@
             <div class="card-body p-4">
                 <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
-                    
+
                     <h5 class="mb-3"><i class="bi bi-file-text"></i> Основная информация</h5>
-                    
+
                     <div class="mb-3">
                         <label for="id_title" class="form-label">
                             <i class="bi bi-card-heading"></i> Заголовок *
                         </label>
-                        <input type="text" name="title" class="form-control" id="id_title" 
-                               placeholder="Например: Вечернее платье Zara" required>
+                        {{ form.title }}
                         <div class="form-text">Краткое и привлекательное название</div>
+                        {% if form.title.errors %}
+                            <div class="text-danger">{{ form.title.errors }}</div>
+                        {% endif %}
                     </div>
 
                     <div class="mb-3">
                         <label for="id_description" class="form-label">
                             <i class="bi bi-text-paragraph"></i> Описание *
                         </label>
-                        <textarea name="description" class="form-control" id="id_description" 
-                                  rows="5" placeholder="Опишите товар подробно..." required></textarea>
+                        {{ form.description }}
                         <div class="form-text">Укажите бренд, размер, состояние, особенности</div>
+                        {% if form.description.errors %}
+                            <div class="text-danger">{{ form.description.errors }}</div>
+                        {% endif %}
                     </div>
 
                     <div class="row">
@@ -41,15 +45,19 @@
                             <label for="id_price" class="form-label">
                                 <i class="bi bi-currency-dollar"></i> Цена за сутки (₽) *
                             </label>
-                            <input type="number" name="price" class="form-control" id="id_price" 
-                                   placeholder="1000" required>
+                            {{ form.price }}
+                            {% if form.price.errors %}
+                                <div class="text-danger">{{ form.price.errors }}</div>
+                            {% endif %}
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="id_deposit_amount" class="form-label">
                                 <i class="bi bi-shield-lock"></i> Залог (₽)
                             </label>
-                            <input type="number" name="deposit_amount" class="form-control" 
-                                   id="id_deposit_amount" placeholder="5000" value="0">
+                            {{ form.deposit_amount }}
+                            {% if form.deposit_amount.errors %}
+                                <div class="text-danger">{{ form.deposit_amount.errors }}</div>
+                            {% endif %}
                         </div>
                     </div>
 
@@ -58,57 +66,55 @@
                             <label for="id_category" class="form-label">
                                 <i class="bi bi-tags"></i> Категория
                             </label>
-                            <select name="category" class="form-select" id="id_category">
-                                <option value="">Выберите категорию</option>
-                                {% for category in form.fields.category.queryset %}
-                                    <option value="{{ category.id }}">{{ category.name }}</option>
-                                {% endfor %}
-                            </select>
+                            {{ form.category }}
+                            {% if form.category.errors %}
+                                <div class="text-danger">{{ form.category.errors }}</div>
+                            {% endif %}
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="id_size" class="form-label">
                                 <i class="bi bi-rulers"></i> Размер
                             </label>
-                            <select name="size" class="form-select" id="id_size">
-                                <option value="">Выберите размер</option>
-                                <option value="XS">XS (40-42)</option>
-                                <option value="S">S (42-44)</option>
-                                <option value="M">M (44-46)</option>
-                                <option value="L">L (46-48)</option>
-                                <option value="XL">XL (48-50)</option>
-                                <option value="XXL">XXL (50-52)</option>
-                                <option value="XXXL">XXXL (52+)</option>
-                            </select>
+                            {{ form.size }}
+                            {% if form.size.errors %}
+                                <div class="text-danger">{{ form.size.errors }}</div>
+                            {% endif %}
                         </div>
                     </div>
 
                     <h5 class="mb-3 mt-4"><i class="bi bi-geo-alt"></i> Местоположение</h5>
-                    
+
                     <div class="mb-3">
                         <label for="id_location" class="form-label">
                             <i class="bi bi-geo-alt"></i> Город/Район *
                         </label>
-                        <input type="text" name="location" class="form-control" id="id_location" 
-                               placeholder="Москва, м. Тверская" required>
+                        {{ form.location }}
+                        {% if form.location.errors %}
+                            <div class="text-danger">{{ form.location.errors }}</div>
+                        {% endif %}
                     </div>
 
                     <div class="mb-3">
                         <label for="id_min_rental_days" class="form-label">
                             <i class="bi bi-calendar-range"></i> Мин. срок аренды (дней)
                         </label>
-                        <input type="number" name="min_rental_days" class="form-control" 
-                               id="id_min_rental_days" value="1" min="1">
+                        {{ form.min_rental_days }}
+                        {% if form.min_rental_days.errors %}
+                            <div class="text-danger">{{ form.min_rental_days.errors }}</div>
+                        {% endif %}
                     </div>
 
                     <h5 class="mb-3 mt-4"><i class="bi bi-images"></i> Фотографии</h5>
-                    
+
                     <div class="mb-3">
                         <label for="id_image" class="form-label">
                             Основное фото *
                         </label>
-                        <input type="file" name="image" class="form-control" id="id_image" 
-                               accept="image/*" required>
+                        {{ form.image }}
                         <div class="form-text">Загрузите качественное фото товара</div>
+                        {% if form.image.errors %}
+                            <div class="text-danger">{{ form.image.errors }}</div>
+                        {% endif %}
                     </div>
 
                     <div class="alert alert-info mt-4">

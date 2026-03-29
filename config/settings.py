@@ -101,12 +101,14 @@ MEDIA_ROOT = BASE_DIR / "media"
 # Настройки для работы в Docker
 CSRF_COOKIE_SECURE = False  # В development можно False
 CSRF_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_HTTPONLY = False  # Разрешить доступ из JavaScript
 SESSION_COOKIE_SECURE = False  # В development можно False
 SESSION_COOKIE_SAMESITE = "Lax"
 SESSION_COOKIE_HTTPONLY = True
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:8000",
     "http://localhost:8001",
+    "http://localhost",
 ]
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
