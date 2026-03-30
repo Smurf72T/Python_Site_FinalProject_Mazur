@@ -84,14 +84,31 @@
 
                     <h5 class="mb-3 mt-4"><i class="bi bi-geo-alt"></i> Местоположение</h5>
 
-                    <div class="mb-3">
-                        <label for="id_location" class="form-label">
-                            <i class="bi bi-geo-alt"></i> Город/Район *
-                        </label>
-                        {{ form.location }}
-                        {% if form.location.errors %}
-                            <div class="text-danger">{{ form.location.errors }}</div>
-                        {% endif %}
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="id_city" class="form-label">
+                                <i class="bi bi-geo-alt"></i> Город *
+                            </label>
+                            {{ form.city }}
+                            <datalist id="city-list">
+                                {% for city in cities %}
+                                <option value="{{ city.name }}">
+                                {% endfor %}
+                            </datalist>
+                            <div class="form-text">Выберите из списка или начните вводить свой</div>
+                            {% if form.city.errors %}
+                                <div class="text-danger">{{ form.city.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="id_location" class="form-label">
+                                <i class="bi bi-map"></i> Район/Метро *
+                            </label>
+                            {{ form.location }}
+                            {% if form.location.errors %}
+                                <div class="text-danger">{{ form.location.errors }}</div>
+                            {% endif %}
+                        </div>
                     </div>
 
                     <div class="mb-3">

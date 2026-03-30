@@ -6,6 +6,8 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
 
+from .city import City
+
 
 class Ad(models.Model):
     """
@@ -43,6 +45,14 @@ class Ad(models.Model):
     )
     deposit_amount = models.DecimalField(
         max_digits=10, decimal_places=2, default=0, verbose_name="Залог"
+    )
+    city = models.ForeignKey(
+        City,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Город",
+        help_text="Выберите город из списка или введите свой",
     )
     location = models.CharField(max_length=255, verbose_name="Местоположение")
     image = models.ImageField(upload_to="ads_images/", verbose_name="Основное фото")

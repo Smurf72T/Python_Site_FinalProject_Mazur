@@ -18,7 +18,7 @@ from django.db import models
 from django.shortcuts import get_object_or_404, redirect, render
 
 from .forms import AdForm, ReviewForm
-from .models import Ad, Message, Notification, RentalRequest
+from .models import Ad, City, Message, Notification, RentalRequest
 from .services import approve_ad_instance, get_filtered_ads, reject_ad_instance
 
 # =============================================================================
@@ -96,6 +96,8 @@ def ad_detail(request, pk):
 @login_required
 def create_ad(request):
     """Создание нового объявления."""
+    cities = City.objects.filter(is_active=True).order_by("name")
+    
     if request.method == "POST":
         form = AdForm(request.POST, request.FILES)
         if form.is_valid():
@@ -107,13 +109,14 @@ def create_ad(request):
     else:
         form = AdForm()
 
-    return render(request, "ads/create_ad.html", {"form": form})
+    return render(request, "ads/create_ad.html", {"form": form, "cities": cities})
 
 
 @login_required
 def edit_ad(request, pk):
     """Редактирование собственного объявления."""
     ad = get_object_or_404(Ad, pk=pk, owner=request.user)
+    cities = City.objects.filter(is_active=True).order_by("name")
 
     if request.method == "POST":
         form = AdForm(request.POST, request.FILES, instance=ad)
@@ -124,7 +127,7 @@ def edit_ad(request, pk):
     else:
         form = AdForm(instance=ad)
 
-    return render(request, "ads/edit_ad.html", {"form": form})
+    return render(request, "ads/edit_ad.html", {"form": form, "cities": cities})
 
 
 @login_required
