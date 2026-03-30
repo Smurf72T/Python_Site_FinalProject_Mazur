@@ -26,7 +26,9 @@ class Favorite(models.Model):
         related_name="favorited_by",
         verbose_name="Объявление",
     )
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата добавления")
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name="Дата добавления"
+    )
 
     class Meta:
         verbose_name = "Избранное"
@@ -71,8 +73,12 @@ class Message(models.Model):
     body = models.TextField(verbose_name="Сообщение")
     is_read = models.BooleanField(default=False, verbose_name="Прочитано")
 
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата отправки")
-    updated_at = models.DateTimeField(auto_now=True, verbose_name="Дата обновления")
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name="Дата отправки"
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, verbose_name="Дата обновления"
+    )
 
     class Meta:
         verbose_name = "Сообщение"
@@ -80,7 +86,11 @@ class Message(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self):
-        return f"From {self.sender.username} to {self.recipient.username}: {self.body[:50]}"
+        body_preview = self.body[:50] if self.body else ""
+        return (
+            f"From {self.sender.username} "
+            f"to {self.recipient.username}: {body_preview}"
+        )
 
 
 class Notification(models.Model):
@@ -107,12 +117,17 @@ class Notification(models.Model):
     title = models.CharField(max_length=200, verbose_name="Заголовок")
     message = models.TextField(verbose_name="Сообщение")
     notification_type = models.CharField(
-        max_length=20, choices=TYPE_CHOICES, default="info", verbose_name="Тип"
+        max_length=20,
+        choices=TYPE_CHOICES,
+        default="info",
+        verbose_name="Тип",
     )
     is_read = models.BooleanField(default=False, verbose_name="Прочитано")
     link = models.CharField(max_length=500, blank=True, verbose_name="Ссылка")
 
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name="Дата создания"
+    )
 
     class Meta:
         verbose_name = "Уведомление"
@@ -120,7 +135,9 @@ class Notification(models.Model):
         ordering = ["-is_read", "-created_at"]
 
     def __str__(self):
-        return f"[{self.notification_type}] {self.title} for {self.user.username}"
+        return (
+            f"[{self.notification_type}] {self.title} for {self.user.username}"
+        )
 
     def mark_as_read(self):
         """

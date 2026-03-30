@@ -1,8 +1,16 @@
 from django.contrib import admin
 from django.utils.html import format_html
 
-from .models import (Ad, AdImage, Category, Favorite, Message, Notification,
-                     RentalRequest, Review)
+from .models import (
+    Ad,
+    AdImage,
+    Category,
+    Favorite,
+    Message,
+    Notification,
+    RentalRequest,
+    Review,
+)
 
 
 @admin.register(Ad)
@@ -18,7 +26,12 @@ class AdAdmin(admin.ModelAdmin):
     )
     list_filter = ("status", "category", "size")
     search_fields = ("title", "description")
-    readonly_fields = ("views_count", "created_at", "updated_at", "image_preview")
+    readonly_fields = (
+        "views_count",
+        "created_at",
+        "updated_at",
+        "image_preview",
+    )
 
     # Массовые действия
     actions = ["approve_ads", "reject_ads", "mark_as_rented"]
@@ -28,19 +41,21 @@ class AdAdmin(admin.ModelAdmin):
         updated = queryset.update(status="approved")
         self.message_user(request, f"Опубликовано {updated} объявлений.")
 
-    approve_ads.short_description = "✓ Опубликовать выбранные объявления"
+    approve_ads.short_description = "✓ Опубликовать выбранные"
 
     def reject_ads(self, request, queryset):
         """Отклонить выбранные объявления."""
         updated = queryset.update(status="rejected")
         self.message_user(request, f"Отклонено {updated} объявлений.")
 
-    reject_ads.short_description = "✗ Отклонить выбранные объявления"
+    reject_ads.short_description = "✗ Отклонить выбранные"
 
     def mark_as_rented(self, request, queryset):
         """Отметить выбранные объявления как сданные."""
         updated = queryset.update(status="rented")
-        self.message_user(request, f"Отмечено как сданные {updated} объявлений.")
+        self.message_user(
+            request, f"Отмечено как сданные {updated} объявлений."
+        )
 
     mark_as_rented.short_description = "→ Отметить как сданные"
 
@@ -48,10 +63,12 @@ class AdAdmin(admin.ModelAdmin):
         """Отображение миниатюры изображения объявления."""
         if obj.image and hasattr(obj.image, "url"):
             try:
-                return format_html(
-                    '<img src="{}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;" />',
-                    obj.image.url,
+                img_html = (
+                    '<img src="{}" style="width: 50px; '
+                    "height: 50px; object-fit: cover; "
+                    'border-radius: 5px;" />'
                 )
+                return format_html(img_html, obj.image.url)
             except Exception:
                 return "Ошибка загрузки"
         return "Нет изображения"
@@ -98,10 +115,12 @@ class AdImageAdmin(admin.ModelAdmin):
         """Отображение миниатюры изображения."""
         if obj.image and hasattr(obj.image, "url"):
             try:
-                return format_html(
-                    '<img src="{}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;" />',
-                    obj.image.url,
+                img_html = (
+                    '<img src="{}" style="width: 50px; '
+                    "height: 50px; object-fit: cover; "
+                    'border-radius: 5px;" />'
                 )
+                return format_html(img_html, obj.image.url)
             except Exception:
                 return "Ошибка загрузки"
         return "Нет изображения"
@@ -142,6 +161,12 @@ class MessageAdmin(admin.ModelAdmin):
 
 @admin.register(Notification)
 class NotificationAdmin(admin.ModelAdmin):
-    list_display = ("user", "title", "notification_type", "is_read", "created_at")
+    list_display = (
+        "user",
+        "title",
+        "notification_type",
+        "is_read",
+        "created_at",
+    )
     list_filter = ("notification_type", "is_read")
     search_fields = ("user__username", "title")

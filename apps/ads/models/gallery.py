@@ -13,14 +13,21 @@ class AdImage(models.Model):
     """
 
     ad = models.ForeignKey(
-        "Ad", on_delete=models.CASCADE, related_name="images", verbose_name="Объявление"
+        "Ad",
+        on_delete=models.CASCADE,
+        related_name="images",
+        verbose_name="Объявление",
     )
     image = models.ImageField(
         upload_to="ads_images/gallery/", verbose_name="Изображение"
     )
-    caption = models.CharField(max_length=255, blank=True, verbose_name="Описание")
+    caption = models.CharField(
+        max_length=255, blank=True, verbose_name="Описание"
+    )
     is_main = models.BooleanField(default=False, verbose_name="Основное фото")
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата загрузки")
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name="Дата загрузки"
+    )
 
     class Meta:
         verbose_name = "Изображение объявления"
@@ -38,5 +45,7 @@ class AdImage(models.Model):
         снимает флаг is_main с остальных изображений объявления.
         """
         if self.is_main:
-            AdImage.objects.filter(ad=self.ad, is_main=True).update(is_main=False)
+            AdImage.objects.filter(ad=self.ad, is_main=True).update(
+                is_main=False
+            )
         super().save(*args, **kwargs)

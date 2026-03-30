@@ -17,7 +17,9 @@ class Category(models.Model):
         description: Описание категории (необязательное).
     """
 
-    name = models.CharField(max_length=100, unique=True, verbose_name="Название")
+    name = models.CharField(
+        max_length=100, unique=True, verbose_name="Название"
+    )
     description = models.TextField(blank=True, verbose_name="Описание")
 
     class Meta:

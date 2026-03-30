@@ -55,17 +55,27 @@ class Profile(models.Model):
     avatar = models.ImageField(
         upload_to="avatars/", blank=True, null=True, verbose_name="Аватар"
     )
-    birth_date = models.DateField(null=True, blank=True, verbose_name="Дата рождения")
+    birth_date = models.DateField(
+        null=True, blank=True, verbose_name="Дата рождения"
+    )
     bio = models.TextField(blank=True, max_length=500, verbose_name="О себе")
-    is_verified = models.BooleanField(default=False, verbose_name="Подтверждён")
+    is_verified = models.BooleanField(
+        default=False, verbose_name="Подтверждён"
+    )
     rating = models.DecimalField(
         max_digits=3, decimal_places=2, default=0, verbose_name="Рейтинг"
     )
 
     # Статистика
-    ads_count = models.PositiveIntegerField(default=0, verbose_name="Объявлений")
-    reviews_count = models.PositiveIntegerField(default=0, verbose_name="Отзывов")
-    member_since = models.DateTimeField(null=True, blank=True, verbose_name="С даты")
+    ads_count = models.PositiveIntegerField(
+        default=0, verbose_name="Объявлений"
+    )
+    reviews_count = models.PositiveIntegerField(
+        default=0, verbose_name="Отзывов"
+    )
+    member_since = models.DateTimeField(
+        null=True, blank=True, verbose_name="С даты"
+    )
 
     class Meta:
         verbose_name = "Профиль"

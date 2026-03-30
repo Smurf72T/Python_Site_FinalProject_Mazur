@@ -2,11 +2,17 @@ from django.db.models import Q
 
 
 def get_filtered_ads(
-    queryset, search=None, location=None, min_price=None, max_price=None, category=None, city=None
+    queryset,
+    search=None,
+    location=None,
+    min_price=None,
+    max_price=None,
+    category=None,
+    city=None,
 ):
     """
     Фильтрация объявлений по параметрам.
-    
+
     Args:
         queryset: Исходный queryset объявлений
         search: Поиск по названию и описанию
@@ -15,7 +21,7 @@ def get_filtered_ads(
         max_price: Максимальная цена
         category: ID категории
         city: ID города
-    
+
     Returns:
         Отфильтрованный queryset
     """
