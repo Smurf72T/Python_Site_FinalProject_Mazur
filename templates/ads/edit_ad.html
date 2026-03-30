@@ -99,10 +99,13 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="id_location" class="form-label">
-                                <i class="bi bi-map"></i> Район/Метро *
+                                <i class="bi bi-map"></i> Район/Метро
                             </label>
-                            <input type="text" name="location" class="form-control" id="id_location"
-                                   value="{{ form.location.value }}" required>
+                            {{ form.location }}
+                            <div class="form-text">Например: м. Тверская. Если не указано — будет "Центральный"</div>
+                            {% if form.location.errors %}
+                                <div class="text-danger">{{ form.location.errors }}</div>
+                            {% endif %}
                         </div>
                     </div>
 
