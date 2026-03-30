@@ -18,7 +18,7 @@ from django.db import models
 from django.shortcuts import get_object_or_404, redirect, render
 
 from .forms import AdForm, ReviewForm
-from .models import Ad, City, Message, Notification, RentalRequest
+from .models import Ad, Category, City, Message, Notification, RentalRequest
 from .services import approve_ad_instance, get_filtered_ads, reject_ad_instance
 
 # =============================================================================
@@ -30,7 +30,7 @@ def home(request):
     """
     Главная страница со списком объявлений.
 
-    Поддерживает фильтрацию по поиску, локации и цене.
+    Поддерживает фильтрацию по поиску, локации, цене, категории и городу.
     """
     ads = Ad.objects.filter(status="approved").order_by("-created_at")
 
@@ -39,16 +39,26 @@ def home(request):
     location = request.GET.get("location")
     min_price = request.GET.get("min_price")
     max_price = request.GET.get("max_price")
+    category = request.GET.get("category")
+    city = request.GET.get("city")
 
     # Применяем фильтры
-    ads = get_filtered_ads(ads, search, location, min_price, max_price)
+    ads = get_filtered_ads(ads, search, location, min_price, max_price, category, city)
 
     # Пагинация
     paginator = Paginator(ads, 6)
     page = request.GET.get("page")
     ads = paginator.get_page(page)
 
-    return render(request, "ads/home.html", {"ads": ads})
+    # Получаем списки для фильтров
+    categories = Category.objects.all().order_by("name")
+    cities = City.objects.filter(is_active=True).order_by("name")
+
+    return render(request, "ads/home.html", {
+        "ads": ads,
+        "categories": categories,
+        "cities": cities,
+    })
 
 
 def ad_detail(request, pk):
