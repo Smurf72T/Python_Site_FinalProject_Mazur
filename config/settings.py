@@ -101,8 +101,8 @@ MEDIA_ROOT = BASE_DIR / "media"
 # Настройки для работы в Docker
 CSRF_COOKIE_SECURE = False  # В development можно False
 CSRF_COOKIE_SAMESITE = "Lax"
-CSRF_COOKIE_HTTPONLY = False  # Разрешить доступ из JavaScript
-CSRF_USE_SESSIONS = False  # CSRF токен в cookie, а не в сессии
+CSRF_COOKIE_HTTPONLY = True  # Безопаснее для production
+CSRF_USE_SESSIONS = True  # CSRF токен в сессии
 SESSION_COOKIE_SECURE = False  # В development можно False
 SESSION_COOKIE_SAMESITE = "Lax"
 SESSION_COOKIE_HTTPONLY = True
