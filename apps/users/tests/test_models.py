@@ -92,3 +92,27 @@ class ProfileModelTest(TestCase):
         self.assertEqual(user.profile.ads_count, 0)
         self.assertEqual(user.profile.reviews_count, 0)
         self.assertIsNotNone(user.profile.member_since)
+
+    def test_profile_is_moderator(self):
+        """Тест флага модератора."""
+        user = User.objects.create_user(username="moder", password="pass123")
+        self.assertFalse(user.profile.is_moderator)
+        user.profile.is_moderator = True
+        user.profile.save()
+        self.assertTrue(user.profile.is_moderator)
+
+    def test_profile_avatar_field(self):
+        """Тест поля аватара."""
+        user = User.objects.create_user(username="testuser", password="pass123")
+        self.assertFalse(user.profile.avatar)
+
+    def test_profile_member_since_auto(self):
+        """Тест автоматической установки member_since."""
+        user = User.objects.create_user(username="newuser", password="pass123")
+        self.assertIsNotNone(user.profile.member_since)
+
+    def test_profile_size_field(self):
+        """Тест поля размера (если добавлено)."""
+        user = User.objects.create_user(username="testuser", password="pass123")
+        profile = user.profile
+        self.assertFalse(hasattr(profile, "size"))

@@ -9,7 +9,7 @@ from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 
-from apps.ads.models import (Ad, AdImage, Category, Favorite, Message,
+from apps.ads.models import (Ad, AdImage, Category, City, Favorite, Message,
                              Notification, RentalRequest, Review)
 
 
@@ -36,6 +36,40 @@ class CategoryModelTest(TestCase):
         self.assertEqual(category.description, "")
 
 
+class CityModelTest(TestCase):
+    """Тесты для модели City."""
+
+    def test_create_city(self):
+        """Создание города."""
+        city = City.objects.create(name="Москва", region="Московская область")
+        self.assertEqual(str(city), "Москва (Московская область)")
+        self.assertEqual(city.name, "Москва")
+
+    def test_create_city_without_region(self):
+        """Город без региона."""
+        city = City.objects.create(name="Санкт-Петербург")
+        self.assertEqual(str(city), "Санкт-Петербург")
+        self.assertEqual(city.region, "")
+
+    def test_city_is_active_default(self):
+        """Город активен по умолчанию."""
+        city = City.objects.create(name="Казань")
+        self.assertTrue(city.is_active)
+
+    def test_city_unique_together(self):
+        """Уникальность пары название-регион."""
+        City.objects.create(name="Москва", region="Московская область")
+        with self.assertRaises(Exception):
+            City.objects.create(name="Москва", region="Московская область")
+
+    def test_city_inactive(self):
+        """Неактивный город."""
+        city = City.objects.create(
+            name="Закрытый город", region="Область", is_active=False
+        )
+        self.assertFalse(city.is_active)
+
+
 class AdModelTest(TestCase):
     """Тесты для модели Ad."""
 
@@ -44,6 +78,7 @@ class AdModelTest(TestCase):
             username="testuser", password="testpass123"
         )
         self.category = Category.objects.create(name="Платья")
+        self.city = City.objects.create(name="Москва")
         self.image = SimpleUploadedFile(
             "test_image.jpg", b"file_content", content_type="image/jpeg"
         )
@@ -55,13 +90,21 @@ class AdModelTest(TestCase):
             title="Вечернее платье",
             description="Красивое платье в пол",
             price=Decimal("5000.00"),
-            location="Москва",
+            deposit_amount=Decimal("10000.00"),
+            city=self.city,
+            location="Москва, центр",
             image=self.image,
             category=self.category,
+            size="M",
+            min_rental_days=3,
         )
         self.assertEqual(str(ad), "Вечернее платье")
         self.assertEqual(ad.status, "pending")
         self.assertEqual(ad.owner, self.user)
+        self.assertEqual(ad.deposit_amount, Decimal("10000.00"))
+        self.assertEqual(ad.city, self.city)
+        self.assertEqual(ad.size, "M")
+        self.assertEqual(ad.min_rental_days, 3)
 
     def test_ad_status_choices(self):
         """Статусы объявления."""
@@ -117,6 +160,35 @@ class AdModelTest(TestCase):
         )
         self.assertFalse(ad.is_available())
 
+    def test_is_available_rented(self):
+        """Недоступность сданного объявления."""
+        ad = Ad.objects.create(
+            owner=self.user,
+            title="Тест",
+            description="Описание",
+            price=Decimal("1000.00"),
+            location="Москва",
+            image=self.image,
+            status="rented",
+        )
+        self.assertFalse(ad.is_available())
+
+    def test_is_available_expired(self):
+        """Недоступность объявления с истёкшим сроком аренды."""
+        from datetime import date, timedelta
+
+        ad = Ad.objects.create(
+            owner=self.user,
+            title="Тест",
+            description="Описание",
+            price=Decimal("1000.00"),
+            location="Москва",
+            image=self.image,
+            status="approved",
+            rental_end_date=date.today() - timedelta(days=1),
+        )
+        self.assertFalse(ad.is_available())
+
     def test_increment_views(self):
         """Увеличение счётчика просмотров."""
         ad = Ad.objects.create(
@@ -131,6 +203,56 @@ class AdModelTest(TestCase):
         initial_views = ad.views_count
         ad.increment_views()
         self.assertEqual(Ad.objects.get(pk=ad.pk).views_count, initial_views + 1)
+
+    def test_ad_size_choices(self):
+        """Тест размеров объявления."""
+        for size_code, size_label in Ad.SIZE_CHOICES:
+            ad = Ad.objects.create(
+                owner=self.user,
+                title=f"Платье размер {size_code}",
+                description="Описание",
+                price=Decimal("1000.00"),
+                location="Москва",
+                image=self.image,
+                size=size_code,
+                category=self.category,
+            )
+            self.assertEqual(ad.size, size_code)
+
+    def test_ad_timestamps(self):
+        """Тест временных меток."""
+        ad = Ad.objects.create(
+            owner=self.user,
+            title="Тест",
+            description="Описание",
+            price=Decimal("1000.00"),
+            location="Москва",
+            image=self.image,
+            category=self.category,
+        )
+        self.assertIsNotNone(ad.created_at)
+        self.assertIsNotNone(ad.updated_at)
+
+    def test_ad_rental_dates(self):
+        """Тест дат аренды."""
+        from datetime import date, timedelta
+
+        start_date = date.today()
+        end_date = start_date + timedelta(days=5)
+
+        ad = Ad.objects.create(
+            owner=self.user,
+            title="Платье на неделю",
+            description="Описание",
+            price=Decimal("1000.00"),
+            location="Москва",
+            image=self.image,
+            category=self.category,
+            rental_start_date=start_date,
+            rental_end_date=end_date,
+        )
+        self.assertEqual(ad.rental_start_date, start_date)
+        self.assertEqual(ad.rental_end_date, end_date)
 
 
 class ReviewModelTest(TestCase):
@@ -198,6 +320,7 @@ class RentalRequestModelTest(TestCase):
             price=Decimal("1000.00"),
             location="Москва",
             image=self.image,
+            min_rental_days=2,
         )
 
     def test_create_rental_request(self):
@@ -208,9 +331,10 @@ class RentalRequestModelTest(TestCase):
             start_date=date.today(),
             end_date=date.today() + timedelta(days=3),
             comment="Хочу арендовать",
+            total_price=Decimal("4000.00"),
         )
         self.assertEqual(request.status, "pending")
-        self.assertIsNotNone(request.total_price)
+        self.assertEqual(request.total_price, Decimal("4000.00"))
 
     def test_calculate_total_price(self):
         """Расчёт стоимости аренды."""
@@ -224,6 +348,19 @@ class RentalRequestModelTest(TestCase):
         expected = Decimal("1000.00") * 6  # 6 дней
         self.assertEqual(total, expected)
 
+    def test_calculate_total_price_min_days(self):
+        """Расчёт стоимости с минимальным сроком аренды."""
+        request = RentalRequest(
+            ad=self.ad,
+            renter=self.renter,
+            start_date=date.today(),
+            end_date=date.today(),  # 1 день
+        )
+        total = request.calculate_total_price()
+        # min_rental_days=2, но формула берёт max(days, min_rental_days)
+        expected = Decimal("1000.00") * 2
+        self.assertEqual(total, expected)
+
     def test_rental_request_status_change(self):
         """Изменение статуса заявки."""
         request = RentalRequest.objects.create(
@@ -231,6 +368,7 @@ class RentalRequestModelTest(TestCase):
             renter=self.renter,
             start_date=date.today(),
             end_date=date.today() + timedelta(days=2),
+            total_price=Decimal("3000.00"),
         )
         request.status = "accepted"
         request.save()
@@ -243,8 +381,39 @@ class RentalRequestModelTest(TestCase):
             renter=self.renter,
             start_date=date.today(),
             end_date=date.today() + timedelta(days=4),
+            total_price=Decimal("5000.00"),
         )
         self.assertEqual(request.rental_days, 5)
+
+    def test_rental_request_timestamps(self):
+        """Тест временных меток заявки."""
+        request = RentalRequest.objects.create(
+            ad=self.ad,
+            renter=self.renter,
+            start_date=date.today(),
+            end_date=date.today() + timedelta(days=2),
+            total_price=Decimal("3000.00"),
+        )
+        self.assertIsNotNone(request.created_at)
+        self.assertIsNotNone(request.updated_at)
+
+    def test_rental_request_status_choices(self):
+        """Тест статусов заявки."""
+        from datetime import timedelta
+
+        base_date = date.today()
+        for i, (status_code, status_label) in enumerate(
+            RentalRequest.STATUS_CHOICES
+        ):
+            request = RentalRequest.objects.create(
+                ad=self.ad,
+                renter=self.renter,
+                start_date=base_date + timedelta(days=i * 10),
+                end_date=base_date + timedelta(days=i * 10 + 1),
+                status=status_code,
+                total_price=Decimal("1000.00"),
+            )
+            self.assertEqual(request.status, status_code)
 
 
 class AdImageModelTest(TestCase):
@@ -262,6 +431,7 @@ class AdImageModelTest(TestCase):
             price=Decimal("1000.00"),
             location="Москва",
             image=self.image,
+            category=Category.objects.create(name="Платья"),
         )
 
     def test_create_ad_image(self):
@@ -291,6 +461,26 @@ class AdImageModelTest(TestCase):
         self.assertTrue(AdImage.objects.get(pk=image2.pk).is_main)
         self.assertFalse(AdImage.objects.get(pk=image1.pk).is_main)
 
+    def test_ad_image_timestamp(self):
+        """Тест временной метки изображения."""
+        gallery_image = SimpleUploadedFile(
+            "gallery.jpg", b"content", content_type="image/jpeg"
+        )
+        img = AdImage.objects.create(
+            ad=self.ad, image=gallery_image, caption="Тест"
+        )
+        self.assertIsNotNone(img.created_at)
+
+    def test_ad_image_caption_optional(self):
+        """Тест необязательного описания."""
+        gallery_image = SimpleUploadedFile(
+            "gallery.jpg", b"content", content_type="image/jpeg"
+        )
+        img = AdImage.objects.create(
+            ad=self.ad, image=gallery_image
+        )
+        self.assertEqual(img.caption, "")
+
 
 class FavoriteModelTest(TestCase):
     """Тесты для модели Favorite."""
@@ -307,6 +497,7 @@ class FavoriteModelTest(TestCase):
             price=Decimal("1000.00"),
             location="Москва",
             image=self.image,
+            category=Category.objects.create(name="Платья"),
         )
 
     def test_create_favorite(self):
@@ -321,6 +512,17 @@ class FavoriteModelTest(TestCase):
         Favorite.objects.create(user=self.user, ad=self.ad)
         with self.assertRaises(Exception):
             Favorite.objects.create(user=self.user, ad=self.ad)
+
+    def test_favorite_timestamp(self):
+        """Тест временной метки избранного."""
+        favorite = Favorite.objects.create(user=self.user, ad=self.ad)
+        self.assertIsNotNone(favorite.created_at)
+
+    def test_favorite_related_names(self):
+        """Тест связанных имён."""
+        favorite = Favorite.objects.create(user=self.user, ad=self.ad)
+        self.assertEqual(self.user.favorites.count(), 1)
+        self.assertEqual(self.ad.favorited_by.count(), 1)
 
 
 class MessageModelTest(TestCase):
@@ -339,6 +541,7 @@ class MessageModelTest(TestCase):
             price=Decimal("1000.00"),
             location="Москва",
             image=self.image,
+            category=Category.objects.create(name="Платья"),
         )
 
     def test_create_message(self):
@@ -358,6 +561,40 @@ class MessageModelTest(TestCase):
             sender=self.sender, recipient=self.recipient, body="Текст"
         )
         self.assertFalse(message.is_read)
+
+    def test_message_with_ad(self):
+        """Сообщение с привязкой к объявлению."""
+        message = Message.objects.create(
+            sender=self.sender,
+            recipient=self.recipient,
+            ad=self.ad,
+            body="Интересует ваше объявление",
+        )
+        self.assertEqual(message.ad, self.ad)
+
+    def test_message_timestamps(self):
+        """Тест временных меток сообщения."""
+        message = Message.objects.create(
+            sender=self.sender, recipient=self.recipient, body="Текст"
+        )
+        self.assertIsNotNone(message.created_at)
+        self.assertIsNotNone(message.updated_at)
+
+    def test_message_mark_as_read(self):
+        """Отметка сообщения как прочитанное."""
+        message = Message.objects.create(
+            sender=self.sender, recipient=self.recipient, body="Тест"
+        )
+        message.is_read = True
+        message.save()
+        self.assertTrue(Message.objects.get(pk=message.pk).is_read)
+
+    def test_message_subject_optional(self):
+        """Тест необязательной темы сообщения."""
+        message = Message.objects.create(
+            sender=self.sender, recipient=self.recipient, body="Без темы"
+        )
+        self.assertEqual(message.subject, "")
 
 
 class NotificationModelTest(TestCase):
@@ -388,3 +625,35 @@ class NotificationModelTest(TestCase):
         )
         notification.mark_as_read()
         self.assertTrue(Notification.objects.get(pk=notification.pk).is_read)
+
+    def test_notification_types(self):
+        """Тест типов уведомлений."""
+        for type_code, type_label in Notification.TYPE_CHOICES:
+            notification = Notification.objects.create(
+                user=self.user,
+                title=f"Уведомление {type_code}",
+                message="Тест",
+                notification_type=type_code,
+            )
+            self.assertEqual(notification.notification_type, type_code)
+
+    def test_notification_link_optional(self):
+        """Тест необязательной ссылки."""
+        notification = Notification.objects.create(
+            user=self.user, title="Тест", message="Сообщение"
+        )
+        self.assertEqual(notification.link, "")
+
+    def test_notification_timestamp(self):
+        """Тест временной метки уведомления."""
+        notification = Notification.objects.create(
+            user=self.user, title="Тест", message="Сообщение"
+        )
+        self.assertIsNotNone(notification.created_at)
+
+    def test_notification_related_name(self):
+        """Тест связанного имени."""
+        Notification.objects.create(
+            user=self.user, title="Тест", message="Сообщение"
+        )
+        self.assertEqual(self.user.notifications.count(), 1)

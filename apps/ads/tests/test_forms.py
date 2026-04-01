@@ -38,6 +38,8 @@ class AdFormTest(TestCase):
             "title": "Новое платье",
             "description": "Описание платья",
             "price": "5000.00",
+            "deposit_amount": "10000.00",
+            "min_rental_days": 2,
             "location": "Москва",
             "category": self.category.id,
         }
