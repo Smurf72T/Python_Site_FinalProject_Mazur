@@ -7,13 +7,22 @@ from django.core.management.base import BaseCommand
 from apps.ads.models import Category
 
 CATEGORIES = [
-    {"name": "Платья", "description": "Вечерние, коктейльные, повседневные платья"},
+    {
+        "name": "Платья",
+        "description": "Вечерние, коктейльные, повседневные платья",
+    },
     {"name": "Костюмы", "description": "Деловые и вечерние костюмы"},
-    {"name": "Верхняя одежда", "description": "Пальто, куртки, плащи, пиджаки"},
+    {
+        "name": "Верхняя одежда",
+        "description": "Пальто, куртки, плащи, пиджаки",
+    },
     {"name": "Обувь", "description": "Туфли, ботинки, сапоги, кроссовки"},
     {"name": "Аксессуары", "description": "Сумки, ремни, шарфы, украшения"},
     {"name": "Джинсы", "description": "Джинсы всех фасонов"},
-    {"name": "Футболки и топы", "description": "Футболки, майки, топы, блузки"},
+    {
+        "name": "Футболки и топы",
+        "description": "Футболки, майки, топы, блузки",
+    },
     {"name": "Свитера и кардиганы", "description": "Вязаная одежда"},
     {"name": "Юбки", "description": "Юбки различной длины и фасонов"},
     {"name": "Брюки и шорты", "description": "Брюки, джинсы, шорты"},
@@ -44,7 +53,8 @@ class Command(BaseCommand):
 
         for cat_data in CATEGORIES:
             category, created = Category.objects.get_or_create(
-                name=cat_data["name"], defaults={"description": cat_data["description"]}
+                name=cat_data["name"],
+                defaults={"description": cat_data["description"]},
             )
             if created:
                 self.stdout.write(
@@ -53,7 +63,9 @@ class Command(BaseCommand):
                 created_count += 1
             else:
                 self.stdout.write(
-                    self.style.WARNING(f"⊕ Пропущена категория: {category.name}")
+                    self.style.WARNING(
+                        f"⊕ Пропущена категория: {category.name}"
+                    )
                 )
                 skipped_count += 1
 

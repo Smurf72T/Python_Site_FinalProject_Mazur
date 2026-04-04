@@ -10,8 +10,10 @@ ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "*").split(",")
 DATABASE_URL = os.environ.get("DATABASE_URL")
 if DATABASE_URL:
     import re
+
     match = re.match(
-        r"postgres://(?P<user>[^:]+):(?P<password>[^@]+)@(?P<host>[^:]+):(?P<port>\d+)/(?P<name>[^?]+)",
+        r"postgres://(?P<user>[^:]+):(?P<password>[^@]+)@"
+        r"(?P<host>[^:]+):(?P<port>\d+)/(?P<name>[^?]+)",
         DATABASE_URL,
     )
     if match:
@@ -80,11 +82,29 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"
+        "NAME": (
+            "django.contrib.auth.password_validation."
+            "UserAttributeSimilarityValidator"
+        )
     },
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
-    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
-    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+    {
+        "NAME": (
+            "django.contrib.auth.password_validation."
+            "MinimumLengthValidator"
+        )
+    },
+    {
+        "NAME": (
+            "django.contrib.auth.password_validation."
+            "CommonPasswordValidator"
+        )
+    },
+    {
+        "NAME": (
+            "django.contrib.auth.password_validation."
+            "NumericPasswordValidator"
+        )
+    },
 ]
 
 LANGUAGE_CODE = "ru-ru"
@@ -101,8 +121,8 @@ MEDIA_ROOT = BASE_DIR / "media"
 # Настройки для работы в Docker
 CSRF_COOKIE_SECURE = False  # В development можно False
 CSRF_COOKIE_SAMESITE = "Lax"
-CSRF_COOKIE_HTTPONLY = False  # Разрешить доступ из JavaScript
-CSRF_USE_SESSIONS = False  # CSRF токен в cookie, а не в сессии
+CSRF_COOKIE_HTTPONLY = True  # Безопаснее для production
+CSRF_USE_SESSIONS = True  # CSRF токен в сессии
 SESSION_COOKIE_SECURE = False  # В development можно False
 SESSION_COOKIE_SAMESITE = "Lax"
 SESSION_COOKIE_HTTPONLY = True
@@ -128,5 +148,6 @@ LOGIN_REDIRECT_URL = "ads:home"
 LOGOUT_REDIRECT_URL = "ads:home"
 LOGIN_URL = "users:login"
 
-# Включить URL админки (False для backend контейнера, True для admin контейнера)
+# Включить URL админки
+# False для backend контейнера, True для admin контейнера
 ENABLE_ADMIN_URL = os.environ.get("ENABLE_ADMIN_URL", "True") == "True"

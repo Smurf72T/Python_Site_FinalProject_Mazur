@@ -56,13 +56,19 @@ class Command(BaseCommand):
                     defaults={"region": city_data["region"]},
                 )
             self.stdout.write(
-                self.style.SUCCESS(f"✓ Создано городов: {City.objects.count()}")
+                self.style.SUCCESS(
+                    f"✓ Создано городов: {City.objects.count()}"
+                )
             )
         else:
             self.stdout.write(
-                self.style.WARNING(f"Таблица городов уже заполнена ({count} записей)")
+                self.style.WARNING(
+                    f"Таблица городов уже заполнена ({count} записей)"
+                )
             )
 
         self.stdout.write("\n" + "=" * 40)
-        self.stdout.write(self.style.SUCCESS("Инициализация данных завершена!"))
+        self.stdout.write(
+            self.style.SUCCESS("Инициализация данных завершена!")
+        )
         self.stdout.write("=" * 40)

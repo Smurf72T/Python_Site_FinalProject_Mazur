@@ -6,6 +6,8 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
 
+from .city import City
+
 
 class Ad(models.Model):
     """
@@ -34,7 +36,10 @@ class Ad(models.Model):
     ]
 
     owner = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="ads", verbose_name="Владелец"
+        User,
+        on_delete=models.CASCADE,
+        related_name="ads",
+        verbose_name="Владелец",
     )
     title = models.CharField(max_length=200, verbose_name="Заголовок")
     description = models.TextField(verbose_name="Описание")
@@ -44,10 +49,23 @@ class Ad(models.Model):
     deposit_amount = models.DecimalField(
         max_digits=10, decimal_places=2, default=0, verbose_name="Залог"
     )
+    city = models.ForeignKey(
+        City,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Город",
+        help_text="Выберите город из списка или введите свой",
+    )
     location = models.CharField(max_length=255, verbose_name="Местоположение")
-    image = models.ImageField(upload_to="ads_images/", verbose_name="Основное фото")
+    image = models.ImageField(
+        upload_to="ads_images/", verbose_name="Основное фото"
+    )
     category = models.ForeignKey(
-        "Category", on_delete=models.SET_NULL, null=True, verbose_name="Категория"
+        "Category",
+        on_delete=models.SET_NULL,
+        null=True,
+        verbose_name="Категория",
     )
     size = models.CharField(
         max_length=10,
@@ -57,7 +75,10 @@ class Ad(models.Model):
         verbose_name="Размер",
     )
     status = models.CharField(
-        max_length=20, choices=STATUS_CHOICES, default="pending", verbose_name="Статус"
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="pending",
+        verbose_name="Статус",
     )
 
     # Даты аренды
@@ -72,10 +93,16 @@ class Ad(models.Model):
     )
 
     # Статистика
-    views_count = models.PositiveIntegerField(default=0, verbose_name="Просмотры")
+    views_count = models.PositiveIntegerField(
+        default=0, verbose_name="Просмотры"
+    )
 
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
-    updated_at = models.DateTimeField(auto_now=True, verbose_name="Дата обновления")
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name="Дата создания"
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, verbose_name="Дата обновления"
+    )
 
     class Meta:
         verbose_name = "Объявление"
@@ -94,7 +121,10 @@ class Ad(models.Model):
         """
         if self.status != "approved":
             return False
-        if self.rental_end_date and self.rental_end_date < timezone.now().date():
+        if (
+            self.rental_end_date
+            and self.rental_end_date < timezone.now().date()
+        ):
             return False
         return True
 

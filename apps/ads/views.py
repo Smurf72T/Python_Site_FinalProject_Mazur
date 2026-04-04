@@ -18,7 +18,7 @@ from django.db import models
 from django.shortcuts import get_object_or_404, redirect, render
 
 from .forms import AdForm, ReviewForm
-from .models import Ad, Message, Notification, RentalRequest
+from .models import Ad, Category, City, Message, Notification, RentalRequest
 from .services import approve_ad_instance, get_filtered_ads, reject_ad_instance
 
 # =============================================================================
@@ -30,7 +30,7 @@ def home(request):
     """
     Главная страница со списком объявлений.
 
-    Поддерживает фильтрацию по поиску, локации и цене.
+    Поддерживает фильтрацию по поиску, локации, цене, категории и городу.
     """
     ads = Ad.objects.filter(status="approved").order_by("-created_at")
 
@@ -39,16 +39,28 @@ def home(request):
     location = request.GET.get("location")
     min_price = request.GET.get("min_price")
     max_price = request.GET.get("max_price")
+    category = request.GET.get("category")
+    city = request.GET.get("city")
 
     # Применяем фильтры
-    ads = get_filtered_ads(ads, search, location, min_price, max_price)
+    ads = get_filtered_ads(
+        ads, search, location, min_price, max_price, category, city
+    )
 
     # Пагинация
     paginator = Paginator(ads, 6)
     page = request.GET.get("page")
     ads = paginator.get_page(page)
 
-    return render(request, "ads/home.html", {"ads": ads})
+    # Получаем списки для фильтров
+    categories = Category.objects.all().order_by("name")
+    cities = City.objects.filter(is_active=True).order_by("name")
+
+    return render(
+        request,
+        "ads/home.html",
+        {"ads": ads, "categories": categories, "cities": cities},
+    )
 
 
 def ad_detail(request, pk):
@@ -60,14 +72,16 @@ def ad_detail(request, pk):
     ad = get_object_or_404(Ad, pk=pk)
 
     # Получаем подтверждённые заявки для проверки дат
-    accepted_requests = RentalRequest.objects.filter(ad=ad, status="accepted").order_by(
-        "start_date"
-    )
+    accepted_requests = RentalRequest.objects.filter(
+        ad=ad, status="accepted"
+    ).order_by("start_date")
 
     # Обработка отзыва
     if request.method == "POST" and request.user.is_authenticated:
         if ad.owner == request.user:
-            messages.error(request, "Нельзя оставить отзыв на своё объявление.")
+            messages.error(
+                request, "Нельзя оставить отзыв на своё объявление."
+            )
             return redirect("ads:detail", pk=pk)
 
         form = ReviewForm(request.POST)
@@ -96,6 +110,8 @@ def ad_detail(request, pk):
 @login_required
 def create_ad(request):
     """Создание нового объявления."""
+    cities = City.objects.filter(is_active=True).order_by("name")
+
     if request.method == "POST":
         form = AdForm(request.POST, request.FILES)
         if form.is_valid():
@@ -107,13 +123,16 @@ def create_ad(request):
     else:
         form = AdForm()
 
-    return render(request, "ads/create_ad.html", {"form": form})
+    return render(
+        request, "ads/create_ad.html", {"form": form, "cities": cities}
+    )
 
 
 @login_required
 def edit_ad(request, pk):
     """Редактирование собственного объявления."""
     ad = get_object_or_404(Ad, pk=pk, owner=request.user)
+    cities = City.objects.filter(is_active=True).order_by("name")
 
     if request.method == "POST":
         form = AdForm(request.POST, request.FILES, instance=ad)
@@ -124,7 +143,9 @@ def edit_ad(request, pk):
     else:
         form = AdForm(instance=ad)
 
-    return render(request, "ads/edit_ad.html", {"form": form})
+    return render(
+        request, "ads/edit_ad.html", {"form": form, "cities": cities}
+    )
 
 
 @login_required
@@ -192,7 +213,8 @@ def create_rental_request(request, pk):
     # Проверка: нельзя арендовать своё объявление
     if ad.owner == request.user:
         messages.error(
-            request, "Это ваше объявление. Нельзя арендовать собственное объявление."
+            request,
+            "Это ваше объявление. Нельзя арендовать собственное объявление.",
         )
         return redirect("ads:detail", pk=pk)
 
@@ -213,14 +235,18 @@ def create_rental_request(request, pk):
                 # Проверка на пересечение с подтверждёнными заявками
                 overlapping = RentalRequest.objects.filter(
                     ad=ad, status="accepted"
-                ).filter(models.Q(start_date__lte=end) & models.Q(end_date__gte=start))
+                ).filter(
+                    models.Q(start_date__lte=end)
+                    & models.Q(end_date__gte=start)
+                )
 
                 if overlapping.exists():
                     last_booking = overlapping.order_by("-end_date").first()
                     messages.error(
                         request,
-                        f"Выбранные даты пересекаются с подтверждённой бронью. "
-                        f'Объявление забронировано до {last_booking.end_date.strftime("%d.%m.%Y")}.',
+                        "Выбранные даты пересекаются с подтверждённой бронью. "
+                        f"Объявление забронировано до "
+                        f'{last_booking.end_date.strftime("%d.%m.%Y")}.',
                     )
                     return redirect("ads:detail", pk=pk)
 
@@ -239,8 +265,8 @@ def create_rental_request(request, pk):
                     user=ad.owner,
                     title="Новая заявка на аренду",
                     message=(
-                        f"Пользователь {request.user.username} хочет арендовать "
-                        f'ваше объявление "{ad.title}". '
+                        f"Пользователь {request.user.username} "
+                        f"хочет арендовать ваше объявление \"{ad.title}\". "
                         f"Период: {start_date} - {end_date}."
                     ),
                     notification_type="info",
@@ -264,13 +290,13 @@ def my_requests(request):
     - Входящие заявки (на объявления пользователя)
     - Исходящие заявки (созданные пользователем)
     """
-    renter_requests = RentalRequest.objects.filter(renter=request.user).order_by(
-        "-created_at"
-    )
+    renter_requests = RentalRequest.objects.filter(
+        renter=request.user
+    ).order_by("-created_at")
 
-    owner_requests = RentalRequest.objects.filter(ad__owner=request.user).order_by(
-        "-created_at"
-    )
+    owner_requests = RentalRequest.objects.filter(
+        ad__owner=request.user
+    ).order_by("-created_at")
 
     return render(
         request,
@@ -335,7 +361,8 @@ def respond_to_request(request, pk):
             )
 
             messages.success(
-                request, "Заявка подтверждена. Объявление отмечено как сданное."
+                request,
+                "Заявка подтверждена. Объявление отмечено как сданное.",
             )
 
         elif action == "reject":
@@ -347,7 +374,8 @@ def respond_to_request(request, pk):
                 user=rental_request.renter,
                 title="Заявка отклонена",
                 message=(
-                    f'Ваша заявка на аренду "{rental_request.ad.title}" ' f"отклонена."
+                    f'Ваша заявка на аренду "{rental_request.ad.title}" '
+                    "отклонена."
                 ),
                 notification_type="error",
                 link=f"/ad/{rental_request.ad.pk}/",

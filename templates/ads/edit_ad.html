@@ -57,7 +57,7 @@
                             <select name="category" class="form-select" id="id_category">
                                 <option value="">Выберите категорию</option>
                                 {% for category in form.fields.category.queryset %}
-                                    <option value="{{ category.id }}" 
+                                    <option value="{{ category.id }}"
                                             {% if category.id == form.category.value %}selected{% endif %}>
                                         {{ category.name }}
                                     </option>
@@ -81,19 +81,39 @@
                         </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="id_location" class="form-label">
-                            <i class="bi bi-geo-alt"></i> Местоположение *
-                        </label>
-                        <input type="text" name="location" class="form-control" id="id_location" 
-                               value="{{ form.location.value }}" required>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="id_city" class="form-label">
+                                <i class="bi bi-geo-alt"></i> Город *
+                            </label>
+                            {{ form.city }}
+                            <datalist id="city-list">
+                                {% for city in cities %}
+                                <option value="{{ city.name }}">
+                                {% endfor %}
+                            </datalist>
+                            <div class="form-text">Выберите из списка или начните вводить свой</div>
+                            {% if form.city.errors %}
+                                <div class="text-danger">{{ form.city.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="id_location" class="form-label">
+                                <i class="bi bi-map"></i> Район/Метро
+                            </label>
+                            {{ form.location }}
+                            <div class="form-text">Например: м. Тверская. Если не указано — будет "Центральный"</div>
+                            {% if form.location.errors %}
+                                <div class="text-danger">{{ form.location.errors }}</div>
+                            {% endif %}
+                        </div>
                     </div>
 
                     <div class="mb-3">
                         <label for="id_min_rental_days" class="form-label">
                             <i class="bi bi-calendar-range"></i> Мин. срок аренды (дней)
                         </label>
-                        <input type="number" name="min_rental_days" class="form-control" 
+                        <input type="number" name="min_rental_days" class="form-control"
                                id="id_min_rental_days" value="{{ form.min_rental_days.value|default:1 }}" min="1">
                     </div>
 

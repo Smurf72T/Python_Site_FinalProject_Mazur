@@ -20,12 +20,16 @@ class Review(models.Model):
         related_name="reviews",
         verbose_name="Объявление",
     )
-    author = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Автор")
+    author = models.ForeignKey(
+        User, on_delete=models.CASCADE, verbose_name="Автор"
+    )
     rating = models.IntegerField(
         choices=[(i, i) for i in range(1, 6)], verbose_name="Рейтинг"
     )
     comment = models.TextField(verbose_name="Комментарий")
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name="Дата создания"
+    )
 
     class Meta:
         verbose_name = "Отзыв"

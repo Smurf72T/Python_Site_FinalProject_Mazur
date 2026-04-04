@@ -16,5 +16,7 @@ urlpatterns = [
     path("profile/", views.profile, name="profile"),
     path("profile/edit/", views.profile_edit, name="profile_edit"),
     path("messages/", views.messages_list, name="messages"),
-    path("messages/<int:user_id>/", views.message_detail, name="message_detail"),
+    path(
+        "messages/<int:user_id>/", views.message_detail, name="message_detail"
+    ),
 ]

@@ -41,15 +41,22 @@ class RentalRequest(models.Model):
 
     # Статус и информация
     status = models.CharField(
-        max_length=20, choices=STATUS_CHOICES, default="pending", verbose_name="Статус"
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="pending",
+        verbose_name="Статус",
     )
     comment = models.TextField(blank=True, verbose_name="Комментарий")
     total_price = models.DecimalField(
         max_digits=10, decimal_places=2, verbose_name="Общая стоимость"
     )
 
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
-    updated_at = models.DateTimeField(auto_now=True, verbose_name="Дата обновления")
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name="Дата создания"
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, verbose_name="Дата обновления"
+    )
 
     class Meta:
         verbose_name = "Заявка на аренду"

@@ -36,6 +36,11 @@ def register(request):
             raw_password = form.cleaned_data.get("password1")
             user = authenticate(username=user.username, password=raw_password)
             login(request, user)
+            messages.success(
+                request,
+                f"Добро пожаловать, {user.username}! "
+                "Вы успешно зарегистрированы.",
+            )
             return redirect("ads:home")
     else:
         form = RegistrationForm()
@@ -105,7 +110,11 @@ def profile_edit(request):
     # Мои объявления для отображения в форме
     ads = Ad.objects.filter(owner=request.user).order_by("-created_at")
 
-    return render(request, "registration/profile_edit.html", {"form": form, "ads": ads})
+    return render(
+        request,
+        "registration/profile_edit.html",
+        {"form": form, "ads": ads},
+    )
 
 
 # =============================================================================
@@ -157,7 +166,9 @@ def messages_list(request):
 
     # Сортируем по дате последнего сообщения
     conversations_list = sorted(
-        conversations.values(), key=lambda x: x["last_message"].created_at, reverse=True
+        conversations.values(),
+        key=lambda x: x["last_message"].created_at,
+        reverse=True,
     )
 
     # Помечаем уведомления о сообщениях как прочитанные
@@ -166,7 +177,9 @@ def messages_list(request):
     ).update(is_read=True)
 
     return render(
-        request, "registration/messages.html", {"conversations": conversations_list}
+        request,
+        "registration/messages.html",
+        {"conversations": conversations_list},
     )
 
 

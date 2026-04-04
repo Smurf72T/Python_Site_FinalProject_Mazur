@@ -93,8 +93,16 @@
             <div class="col-6">
                 <div class="card">
                     <div class="card-body py-2">
-                        <small class="text-muted"><i class="bi bi-geo-alt"></i> Местоположение</small>
-                        <p class="mb-0 fw-bold">{{ ad.location }}</p>
+                        <small class="text-muted"><i class="bi bi-geo-alt"></i> Город</small>
+                        <p class="mb-0 fw-bold">{{ ad.city.name|default:ad.location|truncatechars:20 }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="card">
+                    <div class="card-body py-2">
+                        <small class="text-muted"><i class="bi bi-map"></i> Район</small>
+                        <p class="mb-0 fw-bold">{{ ad.location|truncatechars:15 }}</p>
                     </div>
                 </div>
             </div>
