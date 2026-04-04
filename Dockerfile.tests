@@ -1,5 +1,5 @@
 # Tests Dockerfile
-FROM python:3.14-slim
+FROM python:3.12-slim
 
 WORKDIR /app
 
@@ -14,12 +14,20 @@ RUN apt-get update && apt-get install -y \
 # Копирование requirements
 COPY requirements.txt .
 
-# Установка Python зависимостей (включая pytest)
-RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install --no-cache-dir pytest pytest-django pytest-cov black flake8 isort
-
 # Копирование кода
 COPY . .
+
+# Установка Python зависимостей с использованием зеркала USTC
+RUN pip install --no-cache-dir \
+    --index-url https://pypi.mirrors.ustc.edu.cn/simple/ \
+    --retries 5 \
+    --timeout 30 \
+    -r requirements.txt
+RUN pip install --no-cache-dir \
+    --index-url https://pypi.mirrors.ustc.edu.cn/simple/ \
+    --retries 5 \
+    --timeout 30 \
+    pytest pytest-django pytest-cov black flake8 isort
 
 # Создание директорий
 RUN mkdir -p /app/media /app/staticfiles /app/logs /app/test_results
