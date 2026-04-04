@@ -1,30 +1,31 @@
-#!/bin/bash
+#!/bin/sh
 set -e
 
-# Переход в директорию приложения
-cd /app
+echo "========================================="
+echo "Запуск инициализации данных..."
+echo "========================================="
 
 # Ожидание готовности базы данных
-echo "Waiting for database to be ready..."
-while ! python -c "import socket; socket.create_connection(('db', 5432), timeout=1)" 2>/dev/null; do
-    sleep 1
+echo "Ожидание готовности базы данных..."
+while ! python manage.py check --database default 2>/dev/null; do
+    echo "База данных ещё не готова, жду..."
+    sleep 2
 done
-echo "Database is ready!"
 
 # Применение миграций
-echo "Applying database migrations..."
+echo "Применение миграций..."
 python manage.py migrate --noinput
 
-# Сбор статики
-echo "Collecting static files..."
-python manage.py collectstatic --noinput --clear
+# Инициализация данных (категории и города)
+echo "Инициализация данных..."
+python manage.py init_data
 
-# Запуск инициализации данных (если есть)
-if [ -f "/app/scripts/init_data.py" ]; then
-    echo "Initializing data..."
-    python manage.py shell < /app/scripts/init_data.py
-fi
+# Сборка статики
+echo "Сборка статики..."
+python manage.py collectstatic --noinput --clear 2>/dev/null || true
 
-# Запуск gunicorn
-echo "Starting Gunicorn..."
+echo "========================================="
+echo "Запуск gunicorn..."
+echo "========================================="
+
 exec gunicorn --bind 0.0.0.0:8000 --workers 3 config.wsgi:application
