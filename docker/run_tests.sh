@@ -36,8 +36,13 @@ python -m pytest \
     apps/ads/tests/test_models.py \
     apps/ads/tests/test_forms.py \
     apps/ads/tests/test_services.py \
+    apps/ads/tests/test_views.py \
+    apps/ads/tests/test_views_extended.py \
+    apps/ads/tests/test_extras.py \
     apps/users/tests/test_models.py \
     apps/users/tests/test_forms.py \
+    apps/users/tests/test_views.py \
+    apps/users/tests/test_views_extended.py \
     -v \
     --tb=short \
     --cov=apps \

@@ -2,6 +2,7 @@
 Тесты для представлений (views) приложения ads.
 """
 
+from datetime import date
 from decimal import Decimal
 
 from django.contrib.auth.models import User
@@ -255,8 +256,8 @@ class RentalRequestViewsTest(TestCase):
         request = RentalRequest.objects.create(
             ad=self.ad,
             renter=self.renter,
-            start_date="2026-04-01",
-            end_date="2026-04-05",
+            start_date=date(2026, 4, 1),
+            end_date=date(2026, 4, 5),
         )
         response = self.client.post(
             reverse("ads:respond_to_request", kwargs={"pk": request.pk}),
@@ -271,8 +272,8 @@ class RentalRequestViewsTest(TestCase):
         request = RentalRequest.objects.create(
             ad=self.ad,
             renter=self.renter,
-            start_date="2026-04-01",
-            end_date="2026-04-05",
+            start_date=date(2026, 4, 1),
+            end_date=date(2026, 4, 5),
         )
         response = self.client.post(
             reverse("ads:respond_to_request", kwargs={"pk": request.pk}),
