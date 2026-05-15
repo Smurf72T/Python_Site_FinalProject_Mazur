@@ -26,13 +26,14 @@ RUN pip install --no-cache-dir \
     --timeout 30 \
     -r requirements.txt
 
+# Конвертация скриптов в Unix-формат и установка прав
+RUN apt-get update && apt-get install -y dos2unix \
+    && dos2unix /app/scripts/entrypoint.sh \
+    && chmod +x /app/scripts/entrypoint.sh \
+    && rm -rf /var/lib/apt/lists/*
+
 # Сборка статики
 RUN python manage.py collectstatic --noinput --clear
-
-# Копирование скриптов инициализации и entrypoint
-COPY scripts/init_data.py /app/scripts/init_data.py
-COPY scripts/entrypoint.sh /app/scripts/entrypoint.sh
-RUN chmod +x /app/scripts/entrypoint.sh
 
 # Переменные окружения
 ENV PYTHONDONTWRITEBYTECODE=1
