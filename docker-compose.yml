@@ -74,10 +74,6 @@ services:
         condition: service_healthy
     networks:
       - rental_network
-    command: >
-      sh -c "python manage.py migrate --noinput &&
-             python manage.py collectstatic --noinput &&
-             gunicorn --bind 0.0.0.0:8000 --workers 3 config.wsgi:application"
 
   # ============================================
   # Django Admin (отдельный контейнер)

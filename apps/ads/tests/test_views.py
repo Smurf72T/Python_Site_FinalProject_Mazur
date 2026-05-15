@@ -251,15 +251,12 @@ class RentalRequestViewsTest(TestCase):
 
     def test_respond_to_request_owner(self):
         """Ответ на заявку владельцем."""
-        from datetime import date, timedelta
-
         self.client.login(username="owner", password="testpass123")
         request = RentalRequest.objects.create(
             ad=self.ad,
             renter=self.renter,
-            start_date=date.today(),
-            end_date=date.today() + timedelta(days=4),
-            total_price=Decimal("5000.00"),
+            start_date="2026-04-01",
+            end_date="2026-04-05",
         )
         response = self.client.post(
             reverse("ads:respond_to_request", kwargs={"pk": request.pk}),
@@ -270,15 +267,12 @@ class RentalRequestViewsTest(TestCase):
 
     def test_respond_to_request_not_owner(self):
         """Ответ на заявку не владельцем запрещён."""
-        from datetime import date, timedelta
-
         self.client.login(username="renter", password="testpass123")
         request = RentalRequest.objects.create(
             ad=self.ad,
             renter=self.renter,
-            start_date=date.today(),
-            end_date=date.today() + timedelta(days=4),
-            total_price=Decimal("5000.00"),
+            start_date="2026-04-01",
+            end_date="2026-04-05",
         )
         response = self.client.post(
             reverse("ads:respond_to_request", kwargs={"pk": request.pk}),

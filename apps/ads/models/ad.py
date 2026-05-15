@@ -47,7 +47,7 @@ class Ad(models.Model):
         max_digits=10, decimal_places=2, verbose_name="Цена за сутки"
     )
     deposit_amount = models.DecimalField(
-        max_digits=10, decimal_places=2, default=0, verbose_name="Залог"
+        max_digits=10, decimal_places=2, default=0, blank=True, verbose_name="Залог"
     )
     city = models.ForeignKey(
         City,
@@ -89,7 +89,7 @@ class Ad(models.Model):
         null=True, blank=True, verbose_name="Окончание аренды"
     )
     min_rental_days = models.PositiveIntegerField(
-        default=1, verbose_name="Мин. срок аренды (дней)"
+        default=1, blank=True, verbose_name="Мин. срок аренды (дней)"
     )
 
     # Статистика
