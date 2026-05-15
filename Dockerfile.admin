@@ -20,9 +20,8 @@ RUN mkdir -p /app/media /app/staticfiles /app/logs
 # Копирование кода
 COPY . .
 
-# Установка Python зависимостей с использованием зеркала USTC
+# Установка Python зависимостей
 RUN pip install --no-cache-dir \
-    --index-url https://pypi.mirrors.ustc.edu.cn/simple/ \
     --retries 5 \
     --timeout 30 \
     -r requirements.txt
