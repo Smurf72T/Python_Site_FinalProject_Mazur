@@ -562,6 +562,66 @@ class RentalRequestViewsExtendedTest(TestCase):
             Notification.objects.filter(user=self.renter).exists()
         )
 
+    def test_respond_to_request_accept_overlapping_blocked(self):
+        """Принятие заявки с пересечением дат с подтверждённой — запрещено."""
+        base = date.today() + timedelta(days=30)
+        other_renter = User.objects.create_user(
+            username="other_renter", password="testpass123"
+        )
+        # Уже подтверждённая заявка
+        accepted = RentalRequest.objects.create(
+            ad=self.ad,
+            renter=other_renter,
+            start_date=base,
+            end_date=base + timedelta(days=9),
+            status="accepted",
+        )
+        # Вторая заявка с пересекающимися датами (pending)
+        rental = RentalRequest.objects.create(
+            ad=self.ad,
+            renter=self.renter,
+            start_date=base + timedelta(days=4),
+            end_date=base + timedelta(days=14),
+        )
+        self.client.login(username="owner", password="testpass123")
+        response = self.client.post(
+            reverse("ads:respond_to_request", kwargs={"pk": rental.pk}),
+            {"action": "accept"},
+        )
+        self.assertEqual(response.status_code, 302)
+        rental.refresh_from_db()
+        self.assertEqual(rental.status, "pending")
+        accepted.refresh_from_db()
+        self.assertEqual(accepted.status, "accepted")
+
+    def test_respond_to_request_accept_non_overlapping_ok(self):
+        """Принятие заявки с непересекающимися датами допустимо."""
+        base = date.today() + timedelta(days=30)
+        other_renter = User.objects.create_user(
+            username="other_renter", password="testpass123"
+        )
+        RentalRequest.objects.create(
+            ad=self.ad,
+            renter=other_renter,
+            start_date=base,
+            end_date=base + timedelta(days=9),
+            status="accepted",
+        )
+        rental = RentalRequest.objects.create(
+            ad=self.ad,
+            renter=self.renter,
+            start_date=base + timedelta(days=20),
+            end_date=base + timedelta(days=25),
+        )
+        self.client.login(username="owner", password="testpass123")
+        response = self.client.post(
+            reverse("ads:respond_to_request", kwargs={"pk": rental.pk}),
+            {"action": "accept"},
+        )
+        self.assertEqual(response.status_code, 302)
+        rental.refresh_from_db()
+        self.assertEqual(rental.status, "accepted")
+
     def test_respond_to_request_reject(self):
         """Отклонение заявки."""
         rental = RentalRequest.objects.create(

@@ -360,6 +360,25 @@ def respond_to_request(request, pk):
         action = request.POST.get("action")
 
         if action == "accept":
+            # Проверка на пересечение с другими подтверждёнными заявками
+            overlapping = RentalRequest.objects.filter(
+                ad=rental_request.ad,
+                status="accepted",
+            ).exclude(pk=rental_request.pk).filter(
+                models.Q(start_date__lte=rental_request.end_date)
+                & models.Q(end_date__gte=rental_request.start_date)
+            )
+
+            if overlapping.exists():
+                last_booking = overlapping.order_by("-end_date").first()
+                messages.error(
+                    request,
+                    "Даты пересекаются с уже подтверждённой бронью. "
+                    f"Объявление забронировано до "
+                    f'{last_booking.end_date.strftime("%d.%m.%Y")}.',
+                )
+                return redirect("ads:my_requests")
+
             rental_request.status = "accepted"
             rental_request.save()
 
