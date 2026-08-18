@@ -83,6 +83,27 @@ class AdDetailViewTest(TestCase):
             Ad.objects.get(pk=self.ad.pk).views_count, initial + 1
         )
 
+    def test_ad_detail_message_button_for_other_user(self):
+        """Пользователь видит форму сообщения владельцу на странице объявления."""
+        other = User.objects.create_user(
+            username="other", password="testpass123"
+        )
+        self.client.login(username="other", password="testpass123")
+        response = self.client.get(
+            reverse("ads:detail", kwargs={"pk": self.ad.pk})
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'id="messageModal"')
+        self.assertContains(response, "Написать сообщение")
+
+    def test_ad_detail_no_message_button_for_owner(self):
+        """Владелец не видит форму сообщения самому себе."""
+        self.client.login(username="testuser", password="testpass123")
+        response = self.client.get(
+            reverse("ads:detail", kwargs={"pk": self.ad.pk})
+        )
+        self.assertNotContains(response, 'id="messageModal"')
+
     def test_add_review_not_owner(self):
         """Добавление отзыва не владельцем."""
         moderator = User.objects.create_user(

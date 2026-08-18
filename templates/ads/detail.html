@@ -129,9 +129,10 @@
                     </p>
                 {% endif %}
                 {% if user.is_authenticated and user != ad.owner %}
-                    <a href="#" class="btn btn-outline-primary btn-sm mt-2">
+                    <button type="button" class="btn btn-outline-primary btn-sm mt-2"
+                            data-bs-toggle="modal" data-bs-target="#messageModal">
                         <i class="bi bi-chat"></i> Написать сообщение
-                    </a>
+                    </button>
                 {% endif %}
             </div>
         </div>
@@ -249,6 +250,36 @@
 {% endblock %}
 
 {% block modals %}
+<!-- Модальное окно отправки сообщения владельцу -->
+{% if user.is_authenticated and user != ad.owner %}
+<div class="modal fade" id="messageModal" tabindex="-1" aria-labelledby="messageModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="messageModalLabel">
+                    <i class="bi bi-chat"></i> Сообщение владельцу — {{ ad.owner.username }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" action="{% url 'users:message_detail' ad.owner.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="ad_id" value="{{ ad.pk }}">
+                    <input type="hidden" name="subject" value="По поводу объявления &quot;{{ ad.title }}&quot;">
+                    <div class="mb-3">
+                        <label class="form-label">Сообщение</label>
+                        <textarea name="body" class="form-control" rows="4"
+                                  placeholder="Здравствуйте! Хотел(а) бы арендовать..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-send"></i> Отправить
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
 <!-- Модальное окно аренды -->
 <div class="modal fade" id="rentalModal" tabindex="-1" aria-labelledby="rentalModalLabel" aria-hidden="true">
     <div class="modal-dialog">
