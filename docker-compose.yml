@@ -62,6 +62,7 @@ services:
     environment:
       DJANGO_SETTINGS_MODULE: config.settings
       DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD:-postgres}@db:5432/rental_db  # из .env
+      SECRET_KEY: ${SECRET_KEY:-change-me-in-production}
       ENABLE_ADMIN_URL: "False"  # Отключаем админку в backend
       DEBUG: "False"  # Режим разработки выключен
       ALLOWED_HOSTS: localhost,127.0.0.1
@@ -88,6 +89,7 @@ services:
     environment:
       DJANGO_SETTINGS_MODULE: config.settings
       DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD:-postgres}@db:5432/rental_db  # из .env
+      SECRET_KEY: ${SECRET_KEY:-change-me-in-production}
       ENABLE_ADMIN_URL: "True"  # Включаем админку в admin контейнере
       DEBUG: "False"  # Режим разработки выключен
       ALLOWED_HOSTS: localhost,127.0.0.1

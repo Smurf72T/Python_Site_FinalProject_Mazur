@@ -65,14 +65,25 @@ docker-stop.bat
 - **Админка:** http://localhost/admin/ (логин `admin`, пароль `admin123`)
 - **Результаты тестов:** `./test_results/report.html`, `./test_results/htmlcov/index.html`
 
-### Пароль базы данных
+### Переменные окружения (.env)
 
-Пароль PostgreSQL берётся из переменной окружения `POSTGRES_PASSWORD`
-(файл `.env` в корне проекта). Пример `.env`:
+Пароль PostgreSQL и секретный ключ Django берутся из файла `.env`
+в корне проекта. Пример `.env`:
 
 ```
 POSTGRES_PASSWORD=postgres
+SECRET_KEY=сгенерируйте-свой-ключ
 ```
+
+`SECRET_KEY` используется контейнерами `backend` и `admin` для подписи
+сессий и CSRF-токенов. Сгенерировать надёжный ключ можно так:
+
+```bash
+python -c "import secrets; print(secrets.token_urlsafe(50))"
+```
+
+Если `SECRET_KEY` не задан, docker-compose подставит небезопасное
+значение по умолчанию — не используйте его в реальном деплое.
 
 ## Создание модератора
 
