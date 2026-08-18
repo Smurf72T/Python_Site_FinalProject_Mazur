@@ -140,7 +140,12 @@ def edit_ad(request, pk):
         form = AdForm(request.POST, request.FILES, instance=ad)
         if form.is_valid():
             form.save()
-            messages.success(request, "Объявление обновлено.")
+            # После редактирования объявление снова требует модерации
+            ad.status = "pending"
+            ad.save()
+            messages.success(
+                request, "Объявление обновлено и отправлено на модерацию."
+            )
             return redirect("ads:home")
     else:
         form = AdForm(instance=ad)

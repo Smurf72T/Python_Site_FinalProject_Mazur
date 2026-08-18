@@ -264,6 +264,8 @@ class AdManagementViewsExtendedTest(TestCase):
         if response.status_code == 302:
             self.ad.refresh_from_db()
             self.assertEqual(self.ad.title, "Обновлённое название")
+            # После редактирования объявление снова уходит на модерацию
+            self.assertEqual(self.ad.status, "pending")
 
     def test_delete_ad_get(self):
         """GET удаление объявления (перенаправляет)."""

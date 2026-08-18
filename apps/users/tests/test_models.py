@@ -86,6 +86,35 @@ class ProfileModelTest(TestCase):
         self.assertEqual(owner.profile.rating, Decimal("4.50"))
         self.assertEqual(owner.profile.reviews_count, 2)
 
+    def test_profile_update_rating_reset(self):
+        """Тест сброса рейтинга при удалении всех отзывов."""
+        from apps.ads.models import Ad, Review
+
+        owner = User.objects.create_user(username="owner2", password="pass")
+        reviewer = User.objects.create_user(username="reviewer", password="pass")
+
+        image = SimpleUploadedFile("test.jpg", b"content", content_type="image/jpeg")
+        ad = Ad.objects.create(
+            owner=owner,
+            title="Тест",
+            description="Описание",
+            price=Decimal("1000.00"),
+            location="Москва",
+            image=image,
+        )
+
+        review = Review.objects.create(
+            ad=ad, author=reviewer, rating=5, comment="Отлично"
+        )
+        owner.profile.update_rating()
+        self.assertEqual(owner.profile.rating, Decimal("5.00"))
+
+        # Удаляем все отзывы — рейтинг должен сброситься
+        review.delete()
+        owner.profile.update_rating()
+        self.assertEqual(owner.profile.rating, 0)
+        self.assertEqual(owner.profile.reviews_count, 0)
+
     def test_profile_statistics(self):
         """Тест статистики профиля."""
         user = User.objects.create_user(username="testuser", password="pass123")

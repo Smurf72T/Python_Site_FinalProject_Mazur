@@ -128,7 +128,10 @@ class Profile(models.Model):
         if reviews.exists():
             self.rating = sum(r.rating for r in reviews) / reviews.count()
             self.reviews_count = reviews.count()
-            self.save(update_fields=["rating", "reviews_count"])
+        else:
+            self.rating = 0
+            self.reviews_count = 0
+        self.save(update_fields=["rating", "reviews_count"])
 
 
 @receiver(post_save, sender=User)
