@@ -16,6 +16,7 @@ from django.contrib.auth.models import User
 from django.core.paginator import Paginator
 from django.db import models
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 
 from .forms import AdForm, ReviewForm
 from .models import Ad, Category, City, Message, Notification, RentalRequest
@@ -218,6 +219,11 @@ def create_rental_request(request, pk):
         )
         return redirect("ads:detail", pk=pk)
 
+    # Проверка: объявление должно быть опубликовано и доступно
+    if not ad.is_available():
+        messages.error(request, "Объявление недоступно для аренды.")
+        return redirect("ads:detail", pk=pk)
+
     if request.method == "POST":
         start_date = request.POST.get("start_date")
         end_date = request.POST.get("end_date")
@@ -230,6 +236,10 @@ def create_rental_request(request, pk):
             if start > end:
                 messages.error(
                     request, "Дата начала не может быть позже даты окончания."
+                )
+            elif start < timezone.now().date():
+                messages.error(
+                    request, "Дата начала аренды не может быть в прошлом."
                 )
             else:
                 # Проверка на пересечение с подтверждёнными заявками

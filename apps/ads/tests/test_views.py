@@ -2,6 +2,7 @@
 Тесты для представлений (views) приложения ads.
 """
 
+from datetime import date, timedelta
 from decimal import Decimal
 
 from django.contrib.auth.models import User
@@ -251,12 +252,13 @@ class RentalRequestViewsTest(TestCase):
 
     def test_respond_to_request_owner(self):
         """Ответ на заявку владельцем."""
+        base = date.today() + timedelta(days=5)
         self.client.login(username="owner", password="testpass123")
         request = RentalRequest.objects.create(
             ad=self.ad,
             renter=self.renter,
-            start_date="2026-04-01",
-            end_date="2026-04-05",
+            start_date=base,
+            end_date=base + timedelta(days=4),
         )
         response = self.client.post(
             reverse("ads:respond_to_request", kwargs={"pk": request.pk}),
@@ -267,12 +269,13 @@ class RentalRequestViewsTest(TestCase):
 
     def test_respond_to_request_not_owner(self):
         """Ответ на заявку не владельцем запрещён."""
+        base = date.today() + timedelta(days=5)
         self.client.login(username="renter", password="testpass123")
         request = RentalRequest.objects.create(
             ad=self.ad,
             renter=self.renter,
-            start_date="2026-04-01",
-            end_date="2026-04-05",
+            start_date=base,
+            end_date=base + timedelta(days=4),
         )
         response = self.client.post(
             reverse("ads:respond_to_request", kwargs={"pk": request.pk}),

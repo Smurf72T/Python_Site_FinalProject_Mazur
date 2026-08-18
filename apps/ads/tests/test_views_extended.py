@@ -370,12 +370,13 @@ class RentalRequestViewsExtendedTest(TestCase):
 
     def test_create_rental_request_with_dates(self):
         """Создание заявки с датами."""
+        base = date.today() + timedelta(days=1)
         self.client.login(username="renter", password="testpass123")
         response = self.client.post(
             reverse("ads:create_rental_request", kwargs={"pk": self.ad.pk}),
             {
-                "start_date": "2026-05-01",
-                "end_date": "2026-05-05",
+                "start_date": base.isoformat(),
+                "end_date": (base + timedelta(days=4)).isoformat(),
                 "comment": "Хочу арендовать",
             },
         )
@@ -392,12 +393,50 @@ class RentalRequestViewsExtendedTest(TestCase):
 
     def test_create_rental_request_invalid_dates(self):
         """Создание заявки с невалидными датами (start > end)."""
+        base = date.today() + timedelta(days=10)
         self.client.login(username="renter", password="testpass123")
         response = self.client.post(
             reverse("ads:create_rental_request", kwargs={"pk": self.ad.pk}),
             {
-                "start_date": "2026-05-10",
-                "end_date": "2026-05-01",
+                "start_date": (base + timedelta(days=9)).isoformat(),
+                "end_date": base.isoformat(),
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(
+            RentalRequest.objects.filter(
+                ad=self.ad, renter=self.renter
+            ).exists()
+        )
+
+    def test_create_rental_request_past_dates(self):
+        """Создание заявки с датой начала в прошлом запрещено."""
+        self.client.login(username="renter", password="testpass123")
+        response = self.client.post(
+            reverse("ads:create_rental_request", kwargs={"pk": self.ad.pk}),
+            {
+                "start_date": (date.today() - timedelta(days=2)).isoformat(),
+                "end_date": (date.today() + timedelta(days=2)).isoformat(),
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(
+            RentalRequest.objects.filter(
+                ad=self.ad, renter=self.renter
+            ).exists()
+        )
+
+    def test_create_rental_request_unavailable_ad(self):
+        """Заявка на недоступное (не опубликованное) объявление запрещена."""
+        self.ad.status = "pending"
+        self.ad.save()
+        base = date.today() + timedelta(days=1)
+        self.client.login(username="renter", password="testpass123")
+        response = self.client.post(
+            reverse("ads:create_rental_request", kwargs={"pk": self.ad.pk}),
+            {
+                "start_date": base.isoformat(),
+                "end_date": (base + timedelta(days=2)).isoformat(),
             },
         )
         self.assertEqual(response.status_code, 302)
@@ -418,12 +457,13 @@ class RentalRequestViewsExtendedTest(TestCase):
 
     def test_create_rental_request_overlapping(self):
         """Создание заявки с пересекающимися датами."""
+        base = date.today() + timedelta(days=30)
         # Создаём принятую заявку
         RentalRequest.objects.create(
             ad=self.ad,
             renter=self.renter,
-            start_date=date(2026, 5, 1),
-            end_date=date(2026, 5, 10),
+            start_date=base,
+            end_date=base + timedelta(days=9),
             status="accepted",
         )
         other_renter = User.objects.create_user(
@@ -433,8 +473,8 @@ class RentalRequestViewsExtendedTest(TestCase):
         response = self.client.post(
             reverse("ads:create_rental_request", kwargs={"pk": self.ad.pk}),
             {
-                "start_date": "2026-05-05",
-                "end_date": "2026-05-15",
+                "start_date": (base + timedelta(days=4)).isoformat(),
+                "end_date": (base + timedelta(days=14)).isoformat(),
             },
         )
         self.assertEqual(response.status_code, 302)
