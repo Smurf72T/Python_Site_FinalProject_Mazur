@@ -115,6 +115,7 @@ python manage.py runserver
 ## Тестирование
 
 ```bash
+pip install -r requirements.txt -r requirements-dev.txt
 python -m pytest apps/ads/tests apps/users/tests -v
 ```
 

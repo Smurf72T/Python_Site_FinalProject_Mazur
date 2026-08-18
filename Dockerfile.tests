@@ -25,7 +25,7 @@ RUN pip install --no-cache-dir \
 RUN pip install --no-cache-dir \
     --retries 5 \
     --timeout 30 \
-    pytest pytest-django pytest-cov black flake8 isort
+    -r requirements-dev.txt
 
 # Создание каталогов
 RUN mkdir -p /app/media /app/staticfiles /app/logs /app/test_results
