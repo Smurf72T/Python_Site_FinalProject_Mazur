@@ -131,10 +131,10 @@ class Ad(models.Model):
 
     def increment_views(self):
         """
-        Увеличить счётчик просмотров на единицу.
+        Увеличить счётчик просмотров на единицу (атомарно).
         """
-        self.views_count += 1
-        self.save(update_fields=["views_count"])
+        Ad.objects.filter(pk=self.pk).update(views_count=F("views_count") + 1)
+        self.refresh_from_db(fields=["views_count"])
 
     def save(self, *args, **kwargs):
         """
