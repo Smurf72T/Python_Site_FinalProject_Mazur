@@ -1,34 +1,34 @@
-# Docker инструкция для проекта Rental
+# Docker окружение для проекта Rental
 
-## Структура контейнеров
+## Компоненты инфраструктуры
 
-| Контейнер | Порт | Описание |
-|-----------|------|----------|
-| `rental_nginx` | 80 | Nginx reverse proxy (единая точка входа) |
-| `rental_db` | 5432 | PostgreSQL база данных |
-| `rental_backend` | - | Основное приложение (доступ через nginx) |
-| `rental_admin` | - | Django админка (доступ через nginx) |
-| `rental_tests` | - | Автоматические тесты |
+| Контейнер      | Порт  | Назначение                                        |
+|----------------|-------|---------------------------------------------------|
+| `rental_nginx` | 80    | Nginx reverse proxy (единая точка входа)          |
+| `rental_db`    | 5432  | PostgreSQL сервер базы данных                     |
+| `rental_backend`| -    | Основное приложение (доступно через nginx)        |
+| `rental_admin` | -     | Django админка (доступно через nginx)             |
+| `rental_tests` | -     | Автоматические тесты                              |
 
 ## Быстрый старт
 
-### 1. Запуск всех контейнеров
+### 1. Сборка всех контейнеров
 
 ```bash
 docker-compose up --build
 ```
 
-### 2. Проверка статуса
+### 2. Проверить статус
 
 ```bash
 docker-compose ps
 ```
 
-## Доступ к сервисам
+## Ссылки и порты
 
 ### Основной сайт
 - **URL:** http://localhost/
-- **Описание:** Основной сайт аренды одежды
+- **Назначение:** основной сайт, каталог объявлений
 
 ### Django Admin
 - **URL:** http://localhost/admin/
@@ -45,55 +45,56 @@ docker-compose ps
 
 ### Результаты тестов
 
-После запуска тестов результаты доступны в папке:
-- `./test_results/report.html` - HTML отчёт о тестах
-- `./test_results/htmlcov/index.html` - Покрытие кода
+После запуска тестов результаты сохраняются в папку:
+- `./test_results/report.html` - HTML отчёт по тестам
+- `./test_results/htmlcov/index.html` - покрытие кода
 
-## Отдельные команды
+## Полезные команды
 
-### Запуск только базы данных
+### Запустить только базу данных
 ```bash
 docker-compose up -d db
 ```
 
-### Запуск backend + db
+### Запустить backend + db
 ```bash
 docker-compose up -d backend db
 ```
 
-### Запуск тестов вручную
+### Запустить тесты повторно
 ```bash
 docker-compose run --rm tests
 ```
 
-### Перезапуск тестов
+### Остановить тесты
 ```bash
 docker-compose run tests
 ```
 
-### Остановка всех контейнеров
+### Остановить все контейнеры
 ```bash
 docker-compose down
 ```
 
-### Остановка с удалением volumes
+### Остановить с удалением volumes
 ```bash
 docker-compose down -v
 ```
 
 ## Автоматическая инициализация
 
-При первом запуске автоматически:
-1. ✅ Создаётся база данных
-2. ✅ Применяются миграции
-3. ✅ Создаётся superuser (admin/admin123)
-4. ✅ Заполняются категории (15 шт.)
-5. ✅ Заполняются города (10 шт.)
-6. ✅ Запускаются тесты
+При запуске выполняется инициализация:
+1. ✓ Создание базы данных
+2. ✓ Применение миграций
+3. ✓ Создание superuser (admin/admin123)
+4. ✓ Заполнение категорий (15 шт.)
+5. ✓ Заполнение городов (10 шт.)
+6. ✓ Запуск тестов
 
-## Отладка
+## Дополнительно
 
-### Вход в контейнер
+### Вход в контейнеры
+
 ```bash
 # Backend
 docker-compose exec backend bash
@@ -105,7 +106,8 @@ docker-compose exec db psql -U postgres -d rental_db
 docker-compose exec admin bash
 ```
 
-### Выполнение команд
+### Полезные команды
+
 ```bash
 # Миграции
 docker-compose exec backend python manage.py migrate
@@ -113,7 +115,7 @@ docker-compose exec backend python manage.py migrate
 # Создание superuser
 docker-compose exec backend python manage.py createsuperuser
 
-# Заполнение данными
+# Заполнение городов
 docker-compose exec backend python manage.py fill_categories
 docker-compose exec backend python manage.py fill_cities
 
@@ -121,18 +123,18 @@ docker-compose exec backend python manage.py fill_cities
 docker-compose exec backend python -m pytest apps/ -v
 ```
 
-## Переменные окружения
+## Настройки окружения
 
-| Переменная | Значение по умолчанию | Описание |
-|------------|----------------------|----------|
-| `DJANGO_SETTINGS_MODULE` | config.settings | Настройки Django |
-| `POSTGRES_DB` | rental_db | Имя базы данных |
-| `POSTGRES_USER` | postgres | Пользователь БД |
-| `POSTGRES_PASSWORD` | postgres | Пароль БД |
+| Переменная             | Значение по умолчанию | Назначение          |
+|------------------------|-----------------------|---------------------|
+| `DJANGO_SETTINGS_MODULE` | config.settings       | Настройки Django    |
+| `POSTGRES_DB`          | rental_db             | Имя базы данных     |
+| `POSTGRES_USER`        | postgres              | Администратор БД    |
+| `POSTGRES_PASSWORD`    | postgres              | Пароль БД           |
 
 ## Примечания
 
 - Данные базы данных сохраняются в volume `postgres_data`
-- Для полного сброса: `docker-compose down -v`
-- Медиа-файлы монтируются из локальной папки `./media`
-- Статика монтируется из локальной папки `./staticfiles`
+- Для полного сброса БД: `docker-compose down -v`
+- Файлы-изображения хранятся на локальном диске `./media`
+- Статика собирается на локальный диск `./staticfiles`

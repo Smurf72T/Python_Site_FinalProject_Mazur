@@ -3,23 +3,23 @@ set -e
 
 echo "=== Инициализация Django Admin ==="
 
-# Ожидание готовности базы данных через Python socket
-echo "Ожидание готовности базы данных..."
+# Ожидание запуска базы данных через Python socket
+echo "Ожидание запуска базы данных..."
 until python -c "import socket; s=socket.socket(); s.connect(('db', 5432)); s.close()" 2>/dev/null; do
-    echo "База данных ещё не готова. Ожидание..."
+    echo "База данных ещё не доступна. Повторяем..."
     sleep 2
 done
 
-echo "База данных готова!"
+echo "База данных доступна!"
 
-# Проверка подключения Django к БД
-echo "Проверка подключения Django..."
+# Проверка доступности Django и БД
+echo "Проверка доступности Django..."
 until python manage.py check > /dev/null 2>&1; do
-    echo "Django не может подключиться к БД. Ожидание..."
+    echo "Django не смог подключиться к БД. Повторяем..."
     sleep 2
 done
 
-echo "Django подключен!"
+echo "Django работает!"
 
 # Применение миграций
 echo "Применение миграций..."
@@ -40,14 +40,14 @@ if not User.objects.filter(username='admin').exists():
     )
     print('✓ Superuser создан: login=admin, password=admin123')
 else:
-    print('ℹ Superuser уже существует')
+    print('✓ Superuser уже существует')
 EOF
 
-# Сборка статики
+# Сборка статики (удаляем старые файлы перед сборкой)
 echo "Сборка статики..."
 rm -rf /app/staticfiles/*
 python manage.py collectstatic --noinput
 
-# Запуск сервера админки
+# Запуск админки
 echo "Запуск Django Admin сервера на порту 8001..."
 exec python manage.py runserver 0.0.0.0:8001

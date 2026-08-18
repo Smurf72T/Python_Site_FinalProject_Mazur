@@ -5,8 +5,8 @@ echo "============================================"
 echo "  Запуск автоматических тестов"
 echo "============================================"
 
-# Ожидание готовности базы данных
-echo "Ожидание готовности базы данных..."
+# Ожидание миграций базы данных
+echo "Ожидание миграций базы данных..."
 max_attempts=30
 attempt=0
 
@@ -14,7 +14,7 @@ until python manage.py migrate --check 2>/dev/null; do
     attempt=$((attempt + 1))
     echo "База данных ещё не готова. Попытка $attempt/$max_attempts..."
     if [ $attempt -ge $max_attempts ]; then
-        echo "❌ Превышено время ожидания базы данных"
+        echo "✗ Превышено время ожидания базы данных"
         exit 1
     fi
     sleep 2
@@ -31,7 +31,7 @@ echo "  Запуск pytest"
 echo "============================================"
 echo ""
 
-# Запуск тестов с отчётом
+# Запуск тестов с отчетом
 python -m pytest \
     apps/ads/tests/test_models.py \
     apps/ads/tests/test_forms.py \
@@ -55,25 +55,25 @@ TEST_RESULT=$?
 
 echo ""
 echo "============================================"
-echo "  Результаты тестов"
+echo "  Результат тестов"
 echo "============================================"
 echo ""
 
 if [ $TEST_RESULT -eq 0 ]; then
-    echo "✅ Все тесты пройдены!"
+    echo "✓ Все тесты пройдены!"
 else
-    echo "❌ Некоторые тесты не пройдены (код выхода: $TEST_RESULT)"
+    echo "✗ Некоторые тесты не пройдены (код выхода: $TEST_RESULT)"
 fi
 
 echo ""
-echo "📊 Отчёт о покрытии: /app/test_results/htmlcov/index.html"
-echo "📄 HTML отчёт: /app/test_results/report.html"
+echo "◈ Отчёт покрытия: /app/test_results/htmlcov/index.html"
+echo "◈ HTML отчёт: /app/test_results/report.html"
 echo ""
 
-# Вывод результатов покрытия
+# Отображение результата
 echo "============================================"
 echo "  Покрытие кода"
 echo "============================================"
 
-# Завершение скрипта с результатом тестов
+# Возвращаем код с результатом тестов
 exit $TEST_RESULT

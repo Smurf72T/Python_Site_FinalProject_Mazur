@@ -1,9 +1,9 @@
-# Tests Dockerfile
+# Dockerfile для запуска тестов
 FROM python:3.12-slim
 
 WORKDIR /app
 
-# Установка зависимостей системы
+# Установка системных зависимостей
 RUN apt-get update && apt-get install -y \
     postgresql-client \
     libpq-dev \
@@ -27,10 +27,10 @@ RUN pip install --no-cache-dir \
     --timeout 30 \
     pytest pytest-django pytest-cov black flake8 isort
 
-# Создание директорий
+# Создание каталогов
 RUN mkdir -p /app/media /app/staticfiles /app/logs /app/test_results
 
-# Переменные окружения
+# Настройки окружения
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV DJANGO_SETTINGS_MODULE=config.settings
