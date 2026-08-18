@@ -101,6 +101,13 @@ class Profile(models.Model):
             True
             >>> Profile().get_age() is None
             True
+            >>> # граница: день рождения ещё не наступил в этом году
+            >>> today = date.today()
+            >>> birthday = date(2000, 12, 31)
+            >>> passed = (today.month, today.day) >= (12, 31)
+            >>> expected = today.year - 2000 - (0 if passed else 1)
+            >>> Profile(birth_date=birthday).get_age() == expected
+            True
         """
         if self.birth_date:
             today = date.today()
