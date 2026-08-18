@@ -457,6 +457,18 @@ class RentalRequestViewsExtendedTest(TestCase):
         )
         self.assertEqual(response.status_code, 302)
 
+    def test_create_rental_request_malformed_dates(self):
+        """Некорректный формат дат не вызывает 500."""
+        self.client.login(username="renter", password="testpass123")
+        response = self.client.post(
+            reverse("ads:create_rental_request", kwargs={"pk": self.ad.pk}),
+            {"start_date": "abc", "end_date": "def"},
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(
+            RentalRequest.objects.filter(ad=self.ad, renter=self.renter).exists()
+        )
+
     def test_create_rental_request_overlapping(self):
         """Создание заявки с пересекающимися датами."""
         base = date.today() + timedelta(days=30)

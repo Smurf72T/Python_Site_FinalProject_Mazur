@@ -8,7 +8,7 @@
 - Отзывы и уведомления
 """
 
-from datetime import datetime
+from datetime import date
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -236,8 +236,12 @@ def create_rental_request(request, pk):
         comment = request.POST.get("comment", "")
 
         if start_date and end_date:
-            start = datetime.strptime(start_date, "%Y-%m-%d").date()
-            end = datetime.strptime(end_date, "%Y-%m-%d").date()
+            try:
+                start = date.fromisoformat(start_date)
+                end = date.fromisoformat(end_date)
+            except (TypeError, ValueError):
+                messages.error(request, "Некорректный формат дат.")
+                return redirect("ads:detail", pk=pk)
 
             if start > end:
                 messages.error(
