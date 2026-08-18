@@ -96,9 +96,11 @@ class Profile(models.Model):
             int: Возраст в годах, или None если дата рождения не указана.
 
         Example:
-            >>> profile.birth_date = date(1990, 1, 1)
-            >>> profile.get_age()
-            36
+            >>> profile = Profile(birth_date=date(2000, 1, 1))
+            >>> isinstance(profile.get_age(), int)
+            True
+            >>> Profile().get_age() is None
+            True
         """
         if self.birth_date:
             today = date.today()
