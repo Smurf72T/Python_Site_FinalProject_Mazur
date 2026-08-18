@@ -9,6 +9,7 @@ from datetime import date
 
 from django.contrib.auth.models import User
 from django.db import models
+from django.db.models import Avg, Count
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils import timezone
@@ -123,14 +124,12 @@ class Profile(models.Model):
         """
         from apps.ads.models import Review
 
-        # Отзывы к объявлениям пользователя
-        reviews = Review.objects.filter(ad__owner=self.user)
-        if reviews.exists():
-            self.rating = sum(r.rating for r in reviews) / reviews.count()
-            self.reviews_count = reviews.count()
-        else:
-            self.rating = 0
-            self.reviews_count = 0
+        # Отзывы к объявлениям пользователя (один запрос к БД)
+        stats = Review.objects.filter(ad__owner=self.user).aggregate(
+            avg=Avg("rating"), count=Count("id")
+        )
+        self.rating = stats["avg"] or 0
+        self.reviews_count = stats["count"] or 0
         self.save(update_fields=["rating", "reviews_count"])
 
 
