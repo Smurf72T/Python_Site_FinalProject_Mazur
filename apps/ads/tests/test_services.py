@@ -109,6 +109,29 @@ class ServicesTest(TestCase):
         self.assertEqual(filtered.count(), 1)
         self.assertEqual(filtered.first().price, Decimal("10000.00"))
 
+    def test_get_filtered_ads_price_invalid(self):
+        """Некорректные значения цены не вызывают ошибку и не фильтруют."""
+        Ad.objects.create(
+            owner=self.user,
+            title="Объявление 1",
+            description="Описание",
+            price=Decimal("1000.00"),
+            location="Москва",
+            image=self.image,
+            status="approved",
+            category=self.category,
+        )
+
+        ads = Ad.objects.filter(status="approved")
+
+        # Некорректное значение не должно вызывать ошибку
+        filtered = get_filtered_ads(ads, min_price="abc", max_price="def")
+        self.assertEqual(filtered.count(), 1)
+
+        # Запятая как разделитель тоже должна работать
+        filtered = get_filtered_ads(ads, min_price="500,00", max_price="1500,00")
+        self.assertEqual(filtered.count(), 1)
+
     def test_approve_ad_instance(self):
         """Одобрение объявления."""
         ad = Ad.objects.create(

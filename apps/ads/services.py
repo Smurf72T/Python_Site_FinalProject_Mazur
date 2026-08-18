@@ -1,4 +1,20 @@
+from decimal import Decimal, InvalidOperation
+
 from django.db.models import Q
+
+
+def _parse_decimal(value):
+    """
+    Безопасно преобразовать значение в Decimal.
+
+    Возвращает None, если значение не является корректным числом.
+    """
+    if value is None or str(value).strip() == "":
+        return None
+    try:
+        return Decimal(str(value).replace(",", "."))
+    except (InvalidOperation, ValueError):
+        return None
 
 
 def get_filtered_ads(
@@ -31,9 +47,11 @@ def get_filtered_ads(
         )
     if location:
         queryset = queryset.filter(location__icontains=location)
-    if min_price:
+    min_price = _parse_decimal(min_price)
+    if min_price is not None:
         queryset = queryset.filter(price__gte=min_price)
-    if max_price:
+    max_price = _parse_decimal(max_price)
+    if max_price is not None:
         queryset = queryset.filter(price__lte=max_price)
     if category:
         queryset = queryset.filter(category_id=category)
