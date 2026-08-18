@@ -41,7 +41,7 @@ docker-compose ps
 - Port: 5432
 - Database: rental_db
 - User: postgres
-- Password: postgres
+- Password: из переменной `POSTGRES_PASSWORD` (файл `.env` в корне проекта)
 
 ### Результаты тестов
 
@@ -131,6 +131,10 @@ docker-compose exec backend python -m pytest apps/ -v
 | `POSTGRES_DB`          | rental_db             | Имя базы данных     |
 | `POSTGRES_USER`        | postgres              | Администратор БД    |
 | `POSTGRES_PASSWORD`    | postgres              | Пароль БД           |
+
+Файл `.env` в корне проекта задаёт значения по умолчанию для
+`POSTGRES_PASSWORD` и других переменных, используемых docker-compose.
+`.env` не попадает в git (см. `.gitignore`).
 
 ## Примечания
 
