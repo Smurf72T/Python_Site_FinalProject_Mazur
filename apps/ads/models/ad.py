@@ -4,6 +4,7 @@
 
 from django.contrib.auth.models import User
 from django.db import models
+from django.db.models import F
 from django.utils import timezone
 
 from .city import City
@@ -134,3 +135,44 @@ class Ad(models.Model):
         """
         self.views_count += 1
         self.save(update_fields=["views_count"])
+
+    def save(self, *args, **kwargs):
+        """
+        Сохранить объявление и обновить счётчик объявлений владельца.
+        """
+        updating_fields = kwargs.get("update_fields")
+        # Счётчик не трогаем при точечных обновлениях (например, просмотры)
+        if updating_fields and "owner_id" not in updating_fields:
+            super().save(*args, **kwargs)
+            return
+
+        is_new = self.pk is None
+        old_owner_id = None
+        if not is_new:
+            old_owner_id = (
+                Ad.objects.filter(pk=self.pk)
+                .values_list("owner_id", flat=True)
+                .first()
+            )
+        super().save(*args, **kwargs)
+        if is_new:
+            self._adjust_ads_count(self.owner_id, 1)
+        elif old_owner_id and old_owner_id != self.owner_id:
+            self._adjust_ads_count(old_owner_id, -1)
+            self._adjust_ads_count(self.owner_id, 1)
+
+    def delete(self, *args, **kwargs):
+        """Удалить объявление и уменьшить счётчик объявлений владельца."""
+        owner_id = self.owner_id
+        super().delete(*args, **kwargs)
+        self._adjust_ads_count(owner_id, -1)
+
+    @staticmethod
+    def _adjust_ads_count(owner_id, delta):
+        """Прибавить delta к счётчику объявлений профиля владельца."""
+        from apps.users.models import Profile
+
+        if owner_id:
+            Profile.objects.filter(user_id=owner_id).update(
+                ads_count=F("ads_count") + delta
+            )

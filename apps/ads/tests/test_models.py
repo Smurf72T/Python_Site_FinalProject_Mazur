@@ -106,6 +106,47 @@ class AdModelTest(TestCase):
         self.assertEqual(ad.size, "M")
         self.assertEqual(ad.min_rental_days, 3)
 
+    def test_ads_count_updates_on_create_delete(self):
+        """Счётчик объявлений в профиле обновляется при создании/удалении."""
+        self.assertEqual(self.user.profile.ads_count, 0)
+
+        ad = Ad.objects.create(
+            owner=self.user,
+            title="Объявление 1",
+            description="Описание",
+            price=Decimal("1000.00"),
+            location="Москва",
+            image=self.image,
+            category=self.category,
+        )
+        self.user.profile.refresh_from_db()
+        self.assertEqual(self.user.profile.ads_count, 1)
+
+        ad.delete()
+        self.user.profile.refresh_from_db()
+        self.assertEqual(self.user.profile.ads_count, 0)
+
+    def test_ads_count_updates_on_owner_change(self):
+        """Смена владельца переносит счётчик между профилями."""
+        other = User.objects.create_user(
+            username="other", password="testpass123"
+        )
+        ad = Ad.objects.create(
+            owner=self.user,
+            title="Объявление 1",
+            description="Описание",
+            price=Decimal("1000.00"),
+            location="Москва",
+            image=self.image,
+            category=self.category,
+        )
+        ad.owner = other
+        ad.save()
+        self.user.profile.refresh_from_db()
+        other.profile.refresh_from_db()
+        self.assertEqual(self.user.profile.ads_count, 0)
+        self.assertEqual(other.profile.ads_count, 1)
+
     def test_ad_status_choices(self):
         """Статусы объявления."""
         ad = Ad.objects.create(
