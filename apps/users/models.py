@@ -6,10 +6,12 @@
 """
 
 from datetime import date
+from decimal import Decimal
 
 from django.contrib.auth.models import User
 from django.db import models
-from django.db.models import Avg, Count
+from django.db.models import Avg, Count, DecimalField, PositiveIntegerField, Subquery
+from django.db.models.functions import Coalesce
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils import timezone
@@ -117,20 +119,35 @@ class Profile(models.Model):
         Вычисляет средний рейтинг всех отзывов к объявлениям
         пользователя и обновляет поля rating и reviews_count.
 
-        Example:
-            >>> profile.update_rating()
-            >>> print(profile.rating)
-            4.50
+        Рейтинг пересчитывается одним атомарным UPDATE-запросом
+        с подзапросом, чтобы исключить потерю обновлений при
+        параллельных отзывах.
         """
         from apps.ads.models import Review
 
-        # Отзывы к объявлениям пользователя (один запрос к БД)
-        stats = Review.objects.filter(ad__owner=self.user).aggregate(
-            avg=Avg("rating"), count=Count("id")
+        stats = (
+            Review.objects.filter(ad__owner=self.user)
+            .values("ad__owner")
+            .annotate(avg=Avg("rating"), cnt=Count("id"))
         )
-        self.rating = stats["avg"] or 0
-        self.reviews_count = stats["count"] or 0
-        self.save(update_fields=["rating", "reviews_count"])
+
+        Profile.objects.filter(pk=self.pk).update(
+            rating=Coalesce(
+                Subquery(
+                    stats.values("avg")[:1],
+                    output_field=DecimalField(max_digits=3, decimal_places=2),
+                ),
+                Decimal("0"),
+            ),
+            reviews_count=Coalesce(
+                Subquery(
+                    stats.values("cnt")[:1],
+                    output_field=PositiveIntegerField(),
+                ),
+                0,
+            ),
+        )
+        self.refresh_from_db(fields=["rating", "reviews_count"])
 
 
 @receiver(post_save, sender=User)

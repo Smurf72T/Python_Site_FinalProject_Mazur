@@ -120,6 +120,94 @@ class HomeViewExtendedTest(TestCase):
         self.assertIn("categories", response.context)
         self.assertIn("cities", response.context)
 
+    def test_home_view_sort_by_price_asc(self):
+        """Сортировка по возрастанию цены."""
+        Ad.objects.create(
+            owner=self.user,
+            title="Дешёвое",
+            description="Описание",
+            price=Decimal("500.00"),
+            location="Москва",
+            image=self.image,
+            status="approved",
+            category=self.category,
+        )
+        Ad.objects.create(
+            owner=self.user,
+            title="Дорогое",
+            description="Описание",
+            price=Decimal("9000.00"),
+            location="Москва",
+            image=self.image,
+            status="approved",
+            category=self.category,
+        )
+        response = self.client.get(reverse("ads:home"), {"sort": "cheap"})
+        titles = [ad.title for ad in response.context["ads"]]
+        self.assertEqual(titles[0], "Дешёвое")
+        self.assertEqual(titles[-1], "Дорогое")
+
+    def test_home_view_sort_by_price_desc(self):
+        """Сортировка по убыванию цены."""
+        Ad.objects.create(
+            owner=self.user,
+            title="Дешёвое",
+            description="Описание",
+            price=Decimal("500.00"),
+            location="Москва",
+            image=self.image,
+            status="approved",
+            category=self.category,
+        )
+        Ad.objects.create(
+            owner=self.user,
+            title="Дорогое",
+            description="Описание",
+            price=Decimal("9000.00"),
+            location="Москва",
+            image=self.image,
+            status="approved",
+            category=self.category,
+        )
+        response = self.client.get(reverse("ads:home"), {"sort": "expensive"})
+        titles = [ad.title for ad in response.context["ads"]]
+        self.assertEqual(titles[0], "Дорогое")
+        self.assertEqual(titles[-1], "Дешёвое")
+
+    def test_home_view_sort_by_popular(self):
+        """Сортировка по популярности (просмотрам)."""
+        popular = Ad.objects.create(
+            owner=self.user,
+            title="Популярное",
+            description="Описание",
+            price=Decimal("1000.00"),
+            location="Москва",
+            image=self.image,
+            status="approved",
+            category=self.category,
+        )
+        Ad.objects.filter(pk=popular.pk).update(views_count=99)
+        response = self.client.get(reverse("ads:home"), {"sort": "popular"})
+        titles = [ad.title for ad in response.context["ads"]]
+        self.assertEqual(titles[0], "Популярное")
+
+    def test_home_view_unknown_sort_falls_back_to_new(self):
+        """Неизвестный параметр сортировки не вызывает ошибку."""
+        Ad.objects.create(
+            owner=self.user,
+            title="Новое",
+            description="Описание",
+            price=Decimal("1000.00"),
+            location="Москва",
+            image=self.image,
+            status="approved",
+            category=self.category,
+        )
+        response = self.client.get(reverse("ads:home"), {"sort": "foo"})
+        self.assertEqual(response.status_code, 200)
+        titles = [ad.title for ad in response.context["ads"]]
+        self.assertEqual(titles[0], "Новое")
+
 
 class AdDetailViewExtendedTest(TestCase):
     """Расширенные тесты для детальной страницы объявления."""

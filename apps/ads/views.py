@@ -31,9 +31,10 @@ def home(request):
     """
     Главная страница со списком объявлений.
 
-    Поддерживает фильтрацию по поиску, локации, цене, категории и городу.
+    Поддерживает фильтрацию по поиску, локации, цене, категории и городу,
+    а также сортировку (новые, дешевле, дороже, популярные).
     """
-    ads = Ad.objects.filter(status="approved").order_by("-created_at")
+    ads = Ad.objects.filter(status="approved")
 
     # Получаем параметры фильтрации
     search = request.GET.get("search")
@@ -42,16 +43,31 @@ def home(request):
     max_price = request.GET.get("max_price")
     category = request.GET.get("category")
     city = request.GET.get("city")
+    sort = request.GET.get("sort", "new")
 
     # Применяем фильтры
     ads = get_filtered_ads(
         ads, search, location, min_price, max_price, category, city
     )
 
+    # Сортировка
+    sort_map = {
+        "cheap": "price",
+        "expensive": "-price",
+        "popular": "-views_count",
+        "new": "-created_at",
+    }
+    ads = ads.order_by(sort_map.get(sort, "-created_at"))
+
     # Пагинация
     paginator = Paginator(ads, 6)
     page = request.GET.get("page")
     ads = paginator.get_page(page)
+
+    # Параметры фильтров для сохранения в ссылках пагинации
+    query_params = request.GET.copy()
+    query_params.pop("page", None)
+    query = query_params.urlencode()
 
     # Получаем списки для фильтров
     categories = Category.objects.all().order_by("name")
@@ -60,7 +76,13 @@ def home(request):
     return render(
         request,
         "ads/home.html",
-        {"ads": ads, "categories": categories, "cities": cities},
+        {
+            "ads": ads,
+            "categories": categories,
+            "cities": cities,
+            "sort": sort,
+            "query": query,
+        },
     )
 
 
