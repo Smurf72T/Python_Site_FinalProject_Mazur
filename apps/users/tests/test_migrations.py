@@ -7,7 +7,6 @@ from decimal import Decimal
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import connection
 from django.db.migrations.executor import MigrationExecutor
-from django.db.migrations.recorder import MigrationRecorder
 from django.test import TransactionTestCase
 
 
@@ -22,13 +21,6 @@ class BackfillAdsCountMigrationTest(TransactionTestCase):
         ("ads", "0005_alter_ad_deposit_amount_alter_ad_min_rental_days"),
     ]
     migrate_to = [("users", "0004_backfill_ads_count")]
-
-    def setUp(self):
-        if not MigrationRecorder(connection).has_table():
-            self.skipTest(
-                "Тест миграций требует включённых миграций "
-                "(запустите pytest без --no-migrations)"
-            )
 
     def test_backfill_recalculates_ads_count(self):
         executor = MigrationExecutor(connection)
