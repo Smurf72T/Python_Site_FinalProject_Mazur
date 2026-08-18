@@ -4,6 +4,18 @@ from .models import Ad, City, Review
 
 
 class AdForm(forms.ModelForm):
+    city = forms.CharField(
+        required=False,
+        label="Город",
+        widget=forms.TextInput(
+            attrs={
+                "class": "form-control",
+                "list": "city-list",
+                "placeholder": "Выберите или введите город",
+            }
+        ),
+    )
+
     class Meta:
         model = Ad
         fields = (
@@ -44,7 +56,6 @@ class AdForm(forms.ModelForm):
             "deposit_amount": forms.NumberInput(
                 attrs={"class": "form-control", "placeholder": "5000"}
             ),
-            "city": forms.Select(attrs={"class": "form-select"}),
             "location": forms.TextInput(
                 attrs={
                     "class": "form-control",
@@ -67,38 +78,31 @@ class AdForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Загружаем активные города
-        self.fields["city"].queryset = City.objects.filter(is_active=True)
-        self.fields["city"].empty_label = None
-        # Меняем виджет на TextInput для datalist
-        self.fields["city"].widget = forms.TextInput(
-            attrs={
-                "class": "form-control",
-                "list": "city-list",
-                "placeholder": "Выберите или введите город",
-            }
-        )
+        # При редактировании показываем название города, а не его PK
+        if self.instance and self.instance.pk and self.instance.city_id:
+            self.initial["city"] = self.instance.city.name
 
     def clean_city(self):
         """Обработка города: если есть в базе - используем, иначе создаём."""
-        city_data = self.cleaned_data.get("city")
+        city_name = (self.cleaned_data.get("city") or "").strip()
+        if not city_name:
+            return None
 
-        # Если city_data это строка (название города)
-        if isinstance(city_data, str):
-            city_name = city_data.strip()
-            if not city_name:
-                return None
+        # Поддержка числового PK (админка, тесты, legacy-формы)
+        if city_name.isdigit():
+            try:
+                return City.objects.get(pk=int(city_name))
+            except City.DoesNotExist:
+                pass
 
-            # Ищем существующий город (без учёта регистра)
-            city = City.objects.filter(name__iexact=city_name).first()
+        # Ищем существующий город (без учёта регистра)
+        city = City.objects.filter(name__iexact=city_name).first()
 
-            # Если город не найден - создаём новый
-            if not city:
-                city = City.objects.create(name=city_name, region="")
+        # Если город не найден - создаём новый
+        if not city:
+            city, _ = City.objects.get_or_create(name=city_name, region="")
 
-            return city
-
-        return city_data
+        return city
 
     def clean_location(self):
         """Обработка района/метро: если пусто - подставляем 'Центральный'."""
