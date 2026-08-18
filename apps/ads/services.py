@@ -17,6 +17,21 @@ def _parse_decimal(value):
         return None
 
 
+def _parse_positive_int(value):
+    """
+    Безопасно преобразовать значение в положительное целое (ID).
+
+    Возвращает None, если значение не является корректным числом.
+    """
+    if value is None or str(value).strip() == "":
+        return None
+    try:
+        parsed = int(str(value).strip())
+    except (TypeError, ValueError):
+        return None
+    return parsed if parsed > 0 else None
+
+
 def get_filtered_ads(
     queryset,
     search=None,
@@ -53,9 +68,11 @@ def get_filtered_ads(
     max_price = _parse_decimal(max_price)
     if max_price is not None:
         queryset = queryset.filter(price__lte=max_price)
-    if category:
+    category = _parse_positive_int(category)
+    if category is not None:
         queryset = queryset.filter(category_id=category)
-    if city:
+    city = _parse_positive_int(city)
+    if city is not None:
         queryset = queryset.filter(city_id=city)
     return queryset
 

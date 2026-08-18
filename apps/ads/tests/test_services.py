@@ -132,6 +132,53 @@ class ServicesTest(TestCase):
         filtered = get_filtered_ads(ads, min_price="500,00", max_price="1500,00")
         self.assertEqual(filtered.count(), 1)
 
+    def test_get_filtered_ads_invalid_category_city(self):
+        """Некорректные значения category/city не вызывают ошибку."""
+        Ad.objects.create(
+            owner=self.user,
+            title="Объявление 1",
+            description="Описание",
+            price=Decimal("1000.00"),
+            location="Москва",
+            image=self.image,
+            status="approved",
+            category=self.category,
+        )
+
+        ads = Ad.objects.filter(status="approved")
+
+        # Некорректные значения не должны вызывать ошибку (500)
+        filtered = get_filtered_ads(ads, category="abc", city="def")
+        self.assertEqual(filtered.count(), 1)
+
+        # Отрицательные и нулевые значения тоже игнорируются
+        filtered = get_filtered_ads(ads, category="-5", city="0")
+        self.assertEqual(filtered.count(), 1)
+
+    def test_get_filtered_ads_valid_category_city(self):
+        """Корректные ID category/city применяются как фильтры."""
+        from apps.ads.models import City
+
+        city = City.objects.create(name="Москва", region="Москва")
+        Ad.objects.create(
+            owner=self.user,
+            title="Объявление 1",
+            description="Описание",
+            price=Decimal("1000.00"),
+            location="Москва",
+            image=self.image,
+            status="approved",
+            category=self.category,
+            city=city,
+        )
+
+        ads = Ad.objects.filter(status="approved")
+        filtered = get_filtered_ads(
+            ads, category=str(self.category.id), city=str(city.id)
+        )
+        self.assertEqual(filtered.count(), 1)
+        self.assertEqual(filtered.first().city, city)
+
     def test_approve_ad_instance(self):
         """Одобрение объявления."""
         ad = Ad.objects.create(
