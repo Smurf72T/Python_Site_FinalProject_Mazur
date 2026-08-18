@@ -75,6 +75,14 @@ class AdDetailViewTest(TestCase):
         response = self.client.get(reverse("ads:detail", kwargs={"pk": self.ad.pk}))
         self.assertEqual(response.status_code, 200)
 
+    def test_ad_detail_increments_views(self):
+        """Просмотр объявления увеличивает счётчик просмотров."""
+        initial = self.ad.views_count
+        self.client.get(reverse("ads:detail", kwargs={"pk": self.ad.pk}))
+        self.assertEqual(
+            Ad.objects.get(pk=self.ad.pk).views_count, initial + 1
+        )
+
     def test_add_review_not_owner(self):
         """Добавление отзыва не владельцем."""
         moderator = User.objects.create_user(

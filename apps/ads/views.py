@@ -71,6 +71,7 @@ def ad_detail(request, pk):
     Поддерживает добавление отзывов для авторизованных пользователей.
     """
     ad = get_object_or_404(Ad, pk=pk)
+    ad.increment_views()
 
     # Получаем подтверждённые заявки для проверки дат
     accepted_requests = RentalRequest.objects.filter(
